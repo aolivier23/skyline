@@ -37,7 +37,7 @@ level.
 
 ##Requirements:
 - GLFW3
-- OpenCL 1.2 with `cl_gl_interop` extension
+- OpenCL 1.2 with `cl_krh_gl_sharing` extension
 - OpenGL 4.0
 - c++17 compiler
 - CMake 3.1 for build
