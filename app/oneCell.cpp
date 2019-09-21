@@ -28,7 +28,8 @@
 //serial includes
 #define NOT_ON_DEVICE
 #include "serial/vector.h"
-#include "serial/simple_sphere.h"
+#include "serial/aabb.h"
+#include "serial/material.h"
 
 //c++ includes
 #include <iostream>
@@ -189,9 +190,17 @@ int main(const int argc, const char** argv)
   std::istreambuf_iterator<char> macroBegin(macros), fileEnd;
   std::string source(macroBegin, fileEnd);
 
-  std::ifstream header(INSTALL_DIR "/include/serial/simple_sphere.h");
+  std::ifstream rayHeader(INSTALL_DIR "/include/serial/ray.h");
+  std::istreambuf_iterator<char> rayBegin(rayHeader);
+  source.append(rayBegin, fileEnd);
+
+  std::ifstream header(INSTALL_DIR "/include/serial/aabb.h");
   std::istreambuf_iterator<char> headerBegin(header);
   source.append(headerBegin, fileEnd);
+
+  std::ifstream materialHeader(INSTALL_DIR "/include/serial/material.h");
+  std::istreambuf_iterator<char> materialBegin(materialHeader);
+  source.append(materialBegin, fileEnd);
   
   std::ifstream random(INSTALL_DIR "/include/kernels/linearCongruential.cl");
   std::istreambuf_iterator<char> randomBegin(random);
@@ -227,7 +236,7 @@ int main(const int argc, const char** argv)
     return CL_COMPILE_ERROR;
   }
 
-  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl_float3, cl_float3, cl_float3, size_t, cl::Buffer, size_t>(cl::Kernel(program, "pathTrace"));
+  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, size_t, cl::Buffer, size_t>(cl::Kernel(program, "pathTrace"));
 
   //Set up viewport
   int width, height;
@@ -237,79 +246,48 @@ int main(const int argc, const char** argv)
   //public member functions.
   double initX = 0., initY = 0.;
   glfwGetCursorPos(window, &initX, &initY);
-  auto model = std::make_unique<eng::CameraModel>(cl::float3{0., 0.2, 2.}, cl::float3{0., 0., 0.});
+  auto model = std::make_unique<eng::CameraModel>(cl::float3{0., 0.2, 0.9}, cl::float3{0., 0., 0.});
   ::changeWithWindowSize change(window, ctx,
                                 std::make_unique<eng::FPSController>(std::move(model), 0.05, 0.02, initX, initY));
 
   //Set up geometry to send to the GPU
-  std::vector<simple_sphere> spheres;
-  simple_sphere leftSphere;
-  leftSphere.radius = 0.1;
-  leftSphere.center = cl_float3{-0.3, -leftSphere.radius + 0.4, 0.};
-  leftSphere.color = cl_float3{145./256., 145./256., 120./256.};
-  leftSphere.emission = {0., 0., 0.};
-  spheres.push_back(leftSphere);
+  //TODO: Replace this with a YAML file
+  std::vector<material> boxMaterials;
+  material lightMaterial;
+  lightMaterial.color = cl_float3{0., 0., 0.};
+  lightMaterial.emission = cl_float3{9., 8., 6.};
+  boxMaterials.push_back(lightMaterial);
 
-  simple_sphere rightSphere;
-  rightSphere.radius = 0.2;
-  rightSphere.center = cl_float3{0.2, -rightSphere.radius + 0.4, -0.6};
-  rightSphere.color = cl_float3{145./256., 145./256., 120./256.};
-  rightSphere.emission = {0., 0., 0.};
-  spheres.push_back(rightSphere);
+  material boxMaterial;
+  boxMaterial.color = cl_float3{145./256., 145./256., 120./256.};
+  boxMaterial.emission = cl_float3{0., 0., 0.};
+  boxMaterials.push_back(boxMaterial);
 
-  simple_sphere light;
-  light.center = cl_float3{0., -1.45, -0.5};
-  light.color = cl_float3{0., 0., 0.};
-  light.emission = cl_float3{9., 8., 6.};
-  light.radius = 1.0;
-  spheres.push_back(light);
+  std::vector<aabb> boxes;
+  aabb lightBox;
+  lightBox.width = cl_float3{0.5, 0.5, 0.5};
+  lightBox.center = cl_float3{0., -1.45, -0.5};
+  lightBox.material = 0;
+  boxes.push_back(lightBox);
 
-  simple_sphere floor;
-  floor.radius = 200.;
-  floor.center = cl_float3{0., floor.radius + 0.4, 0.};
-  floor.color = cl_float3{1., 165./256., 0.};
-  floor.emission = cl_float3{0., 0., 0.};
-  spheres.push_back(floor);
+  aabb myFirstBox;
+  myFirstBox.width = cl_float3{0.1, 0.2, 0.3};
+  myFirstBox.center = cl_float3{-0.5, -1. + myFirstBox.width.y, -0.3};
+  myFirstBox.material = 1;
+  boxes.push_back(myFirstBox);
 
-  simple_sphere ceiling;
-  ceiling.radius = 200.;
-  ceiling.center = cl_float3{0., -ceiling.radius - 0.5, 0.};
-  ceiling.color = cl_float3{1., 165./256., 0.};
-  ceiling.emission = cl_float3{0., 0., 0.};
-  spheres.push_back(ceiling);
+  aabb anotherBox;
+  anotherBox.width = cl_float3{0.3, 0.6, 0.2};
+  anotherBox.center = cl_float3{0.6, -1. + anotherBox.width.y, -0.1};
+  anotherBox.material = 1;
+  boxes.push_back(anotherBox);
 
-  simple_sphere backWall;
-  backWall.radius = 200.;
-  backWall.center = cl_float3{0., 0., -backWall.radius - 1.0f};
-  backWall.color = cl_float3{1., 165./256., 0.};
-  backWall.emission = cl_float3{0., 0., 0.};
-  spheres.push_back(backWall);
- 
-  simple_sphere leftWall;
-  leftWall.radius = 200.;
-  leftWall.center = cl_float3{-leftWall.radius - 0.5f, 0., 0.};
-  leftWall.color = cl_float3{1., 165./256., 0.};
-  leftWall.emission = cl_float3{0., 0., 0.};
-  spheres.push_back(leftWall);
+  std::vector<aabb> skybox = {aabb{cl_float3{3., 3., 3.}, cl_float3{0., 0., 0.}, 1, 0, 0, 0}};
 
-  simple_sphere rightWall;
-  rightWall.radius = 200.;
-  rightWall.center = cl_float3{rightWall.radius + 0.5f, 0., 0.};
-  rightWall.color = cl_float3{1., 165./256., 0.};
-  rightWall.emission = cl_float3{0., 0., 0.};
-  spheres.push_back(rightWall);
-
-  simple_sphere frontWall;
-  frontWall.radius = 200.;
-  frontWall.center = cl_float3{0., 0., frontWall.radius + 3.0f};
-  frontWall.color = cl_float3{1., 165./256., 0.};
-  frontWall.emission = cl_float3{0., 0., 0.};
-  spheres.push_back(frontWall);
-
-  //TODO: Figure out how to provide meaningful seeds that change on each frame
-  cl::Buffer geometry(ctx, spheres.begin(), spheres.end(), false);
+  cl::Buffer geometry(ctx, boxes.begin(), boxes.end(), false);
+  cl::Buffer materials(ctx, boxMaterials.begin(), boxMaterials.end(), false);
+  cl::Buffer skyboxes(ctx, skybox.begin(), skybox.end(), false); //If I want skybox to be in the global address space, it has to be a buffer
   cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
-  cl_float3 background{0., 0., 1.};
 
   //Render loop that calls OpenCL kernel
   while(!glfwWindowShouldClose(window))
@@ -319,7 +297,7 @@ int main(const int argc, const char** argv)
       std::vector<cl::Memory> mem = {*(change.glImage)};
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
-                    *(change.clImage), geometry, spheres.size(), background, change.camera().position(),
+                    *(change.clImage), geometry, boxes.size(), materials, skyboxes, change.camera().position(),
                     change.camera().focalPlane(), 4, change.seeds, ++change.nIterations);
       queue.finish();
       queue.enqueueReleaseGLObjects(&mem);
@@ -329,10 +307,6 @@ int main(const int argc, const char** argv)
       std::cerr << "Caught an OpenCL error while running kernel for drawing:\n" << e.err() << ": " << e.what() << "\n";
       return CL_RUN_ERROR;
     }
-
-    #ifndef NDEBUG
-      std::cout << "iteration " << change.nIterations << "\n";
-    #endif
 
     change.render(queue);
     glfwSwapBuffers(window);
