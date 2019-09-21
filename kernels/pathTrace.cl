@@ -36,7 +36,6 @@ float3 trace(ray thisRay, const unsigned long int nBounces, __global aabb* geome
       }
     }
 
-    //N.B.: Instead of hitting the sky, rays hit the skybox now.
     //If this ray didn't intersect anything, it goes to the background and doesn't come back.  This should only happen for debugging because the ray would be outside the skybox!
     if(closestDist < 0)
     {
@@ -83,7 +82,7 @@ ray generateRay(const int2 pixel, const float3 cameraPos, const float3 focalPos,
 
   const float aspectRatio = (float)width / (float)height;
   const float2 ndc = (float2)((float)pixel.x/(float)width, (float)pixel.y/(float)height);
-  const float3 pixelPos = (float3)((ndc.x - 0.5f)*aspectRatio, -ndc.y + 0.5f, 0.f) + focalPos;
+  const float3 pixelPos = (float3)((ndc.x - 0.5f)*aspectRatio, ndc.y - 0.5f, 0.f) + focalPos;
   thisRay.direction = normalize(pixelPos - thisRay.position);
 
   return thisRay;

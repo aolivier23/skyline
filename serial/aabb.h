@@ -61,14 +61,14 @@ float3 aabb_normal(const aabb shape, const float3 pos)
   //TODO: Actually calculate safety margin
   const float3 diff = pos - shape.center;
   if(fabs(diff.x - shape.width.x/2.) < FLT_EPSILON*3.) return (float3)(1., 0., 0.);
-  if(fabs(diff.x + shape.width.x/2.) < FLT_EPSILON*3.) return -(float3)(1., 0., 0.);
+  if(fabs(diff.x + shape.width.x/2.) < FLT_EPSILON*3.) return (float3)(-1., 0., 0.);
 
   if(fabs(diff.y - shape.width.y/2.) < FLT_EPSILON*3.) return (float3)(0., 1., 0.);
-  if(fabs(diff.y + shape.width.y/2.) < FLT_EPSILON*3.) return -(float3)(0., 1., 0.);
+  if(fabs(diff.y + shape.width.y/2.) < FLT_EPSILON*3.) return (float3)(0., -1., 0.);
 
   if(fabs(diff.z - shape.width.z/2.) < FLT_EPSILON*3.) return (float3)(0., 0., 1.);
 
-  return -(float3)(0., 0., 1.);
+  return (float3)(0., 0., -1.);
 }
 #endif //ifndef NOT_ON_DEVICE
 #endif //AABB_H

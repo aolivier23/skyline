@@ -28,8 +28,7 @@ namespace eng
   {
     if(action)
     {
-      //TODO: fWidth and fHeight would be a better fit than a constant 1024
-      if(ypos) fModel->pitch(-(ypos - fPrevMouseY)/180.*M_PI/5.);
+      if(ypos) fModel->pitch((ypos - fPrevMouseY)/180.*M_PI/5.);
       if(xpos) fModel->yaw((xpos - fPrevMouseX)/180.*M_PI/5.);
       return true; //The camera model changed
     }

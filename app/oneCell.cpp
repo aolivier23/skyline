@@ -263,10 +263,15 @@ int main(const int argc, const char** argv)
   boxMaterial.emission = cl_float3{0., 0., 0.};
   boxMaterials.push_back(boxMaterial);
 
+  material wallMaterial;
+  wallMaterial.color = cl_float3{1., 165./256., 0.};
+  wallMaterial.emission = cl_float3{0., 0., 0.};
+  boxMaterials.push_back(wallMaterial);
+
   std::vector<aabb> boxes;
   aabb lightBox;
   lightBox.width = cl_float3{0.5, 0.5, 0.5};
-  lightBox.center = cl_float3{0., -1.45, -0.5};
+  lightBox.center = cl_float3{0., 0.95, -0.5};
   lightBox.material = 0;
   boxes.push_back(lightBox);
 
@@ -282,7 +287,7 @@ int main(const int argc, const char** argv)
   anotherBox.material = 1;
   boxes.push_back(anotherBox);
 
-  std::vector<aabb> skybox = {aabb{cl_float3{3., 3., 3.}, cl_float3{0., 0., 0.}, 1, 0, 0, 0}};
+  std::vector<aabb> skybox = {aabb{cl_float3{2., 2., 2.}, cl_float3{0., 0., 0.}, 2, 0, 0, 0}};
 
   cl::Buffer geometry(ctx, boxes.begin(), boxes.end(), false);
   cl::Buffer materials(ctx, boxMaterials.begin(), boxMaterials.end(), false);
