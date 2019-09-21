@@ -1,0 +1,4 @@
+#Set up environment to run gdmlRaytrace and applications that depend on libraries it installs.
+#Install directory is filled in by CMake at project configure time.
+export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:$LD_LIBRARY_PATH
+export PATH=${CMAKE_INSTALL_PREFIX}/bin:$PATH
