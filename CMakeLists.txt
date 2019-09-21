@@ -39,9 +39,9 @@ add_definitions(-DINSTALL_DIR="${CMAKE_INSTALL_PREFIX}")
 #Include build system for the rest of this project.  Add new top-level directories here.
 add_subdirectory(gl)
 add_subdirectory(camera)
-#add_subdirectory(serial) #TODO: Put this back
-#add_subdirectory(app) #TODO: Put this back
-#add_subdirectory(kernels) #TODO: Put this back
+add_subdirectory(serial)
+add_subdirectory(app)
+add_subdirectory(kernels)
 
 #install setup script
 configure_file(setup.sh.in setup.sh)
