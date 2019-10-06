@@ -236,7 +236,7 @@ int main(const int argc, const char** argv)
     return CL_COMPILE_ERROR;
   }
 
-  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, size_t, cl::Buffer, size_t>(cl::Kernel(program, "pathTrace"));
+  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, cl_float3, cl_float3, size_t, cl::Buffer, size_t>(cl::Kernel(program, "pathTrace"));
 
   //Set up viewport
   int width, height;
@@ -271,7 +271,7 @@ int main(const int argc, const char** argv)
   std::vector<aabb> boxes;
   aabb lightBox;
   lightBox.width = cl_float3{0.5, 0.5, 0.5};
-  lightBox.center = cl_float3{0., 0.95, -0.5};
+  lightBox.center = cl_float3{0., 1.05, -0.5};
   lightBox.material = 0;
   boxes.push_back(lightBox);
 
@@ -303,7 +303,8 @@ int main(const int argc, const char** argv)
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
                     *(change.clImage), geometry, boxes.size(), materials, skyboxes, change.camera().position(),
-                    change.camera().focalPlane(), 4, change.seeds, ++change.nIterations);
+                    change.camera().focalPlane(), change.camera().up(), change.camera().right(), 4, change.seeds,
+                    ++change.nIterations);
       queue.finish();
       queue.enqueueReleaseGLObjects(&mem);
     }

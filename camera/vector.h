@@ -11,6 +11,7 @@
 #include <cmath> //std::sqrt
 #include <ostream>
 #include <vector>
+#include <cassert>
 
 namespace
 {
@@ -264,6 +265,7 @@ namespace cl
       //Normalized version of a vector
       vector<TYPE, SIZE, BASE_TYPE> norm() const
       {
+        assert(mag() != 0 && "Trying to normalize the 0 vector!");
         return *this * 1./mag();
       }
   };

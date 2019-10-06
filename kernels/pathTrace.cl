@@ -75,14 +75,14 @@ float3 trace(ray thisRay, const unsigned long int nBounces, __global aabb* geome
 //      degrees from starting direction.  That could be caused by a bug
 //      here.
 ray generateRay(const int2 pixel, const float3 cameraPos, const float3 focalPos,
-                       unsigned long int width, unsigned long int height)
+                const float3 up, const float3 right, unsigned long int width, unsigned long int height)
 {
   ray thisRay;
   thisRay.position = cameraPos;
 
   const float aspectRatio = (float)width / (float)height;
   const float2 ndc = (float2)((float)pixel.x/(float)width, (float)pixel.y/(float)height);
-  const float3 pixelPos = (float3)((ndc.x - 0.5f)*aspectRatio, ndc.y - 0.5f, 0.f) + focalPos;
+  const float3 pixelPos = (ndc.x - 0.5f)*aspectRatio*right + (ndc.y - 0.5f)*up + focalPos;
   thisRay.direction = normalize(pixelPos - thisRay.position);
 
   return thisRay;
@@ -90,8 +90,8 @@ ray generateRay(const int2 pixel, const float3 cameraPos, const float3 focalPos,
 
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
                         const unsigned long int nBoxes, __global material* materials, __global aabb* skybox,
-                        const float3 cameraPos, const float3 focalPos, const long unsigned int nBounces, __global size_t* seeds,
-                        long unsigned int iterations)
+                        const float3 cameraPos, const float3 focalPos, const float3 up, const float3 right,
+                        const long unsigned int nBounces, __global size_t* seeds, long unsigned int iterations)
 {
   const int2 pixel = (int2)(get_global_id(0), get_global_id(1));
   
@@ -101,7 +101,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   
   for(size_t sample = 0; sample < nSamplesPerFrame; ++sample)
   {
-    ray thisRay = generateRay(pixel, cameraPos, focalPos, get_global_size(0), get_global_size(1));
+    ray thisRay = generateRay(pixel, cameraPos, focalPos, up, right, get_global_size(0), get_global_size(1));
     //When I comment out the line just below this one, this kernel runs in about 600us.
     pixelColor += (float4)(trace(thisRay, nBounces, geometry, nBoxes, materials, skybox,
                                  seeds), 1.f) / (float)(iterations*nSamplesPerFrame);
