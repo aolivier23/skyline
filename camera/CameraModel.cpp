@@ -58,7 +58,6 @@ namespace eng
 
   cl_float3 CameraModel::position() const
   {
-    //return (fPosition + cl::float3(fUniform(fLCGen), fUniform(fLCGen), fUniform(fLCGen))).data; //TODO: camera jitter here using fUniform and fLCGen
-    return fPosition.data;
+    return (fPosition + cl::float3(fUniform(fLCGen), fUniform(fLCGen), fUniform(fLCGen))).data; //TODO: camera jitter here using fUniform and fLCGen
   }
 }
