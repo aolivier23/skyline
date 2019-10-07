@@ -35,15 +35,15 @@ namespace eng
 
   void CameraModel::yaw(const float angle)
   {
-    fYaw += angle;
+    fYaw -= angle;
     updateDirections();
   }
 
   void CameraModel::pitch(const float angle)
   {
-    if(fabs(fabs(fPitch + angle) - M_PI/2.) > M_PI/180.)
+    if(fabs(fabs(fPitch - angle) - M_PI/2.) > M_PI/180.)
     {
-      fPitch += angle;
+      fPitch -= angle;
       updateDirections();
     }
   }
