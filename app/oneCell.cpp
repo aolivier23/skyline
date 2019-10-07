@@ -246,7 +246,7 @@ int main(const int argc, const char** argv)
   //public member functions.
   double initX = 0., initY = 0.;
   glfwGetCursorPos(window, &initX, &initY);
-  auto model = std::make_unique<eng::CameraModel>(cl::float3{0., 0.2, 0.9}, cl::float3{0., 0., 0.});
+  auto model = std::make_unique<eng::CameraModel>(cl::float3{0., 0.2, 0.9}, cl::float3{0., 0.2, 0.0});
   ::changeWithWindowSize change(window, ctx,
                                 std::make_unique<eng::FPSController>(std::move(model), 0.05, 0.02, initX, initY));
 

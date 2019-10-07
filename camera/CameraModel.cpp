@@ -11,14 +11,15 @@
 
 namespace eng
 {
-  CameraModel::CameraModel(const cl::float3& pos, const cl::float3& focal, const cl::float3& up): fPosition(pos),
-                                                                                                  fFocalPlane(focal),
-                                                                                                  fUp(up),
-                                                                                                  fRight(up.cross(fFocalPlane - fPosition).norm()),
-                                                                                                  fLCGen(std::chrono::system_clock::now().time_since_epoch().count()),
-                                                                                                  fUniform(-0.01, 0.01)
+  CameraModel::CameraModel(const cl::float3& pos, const cl::float3& focal): fPosition(pos),
+                                                                            fFocalPlane(focal),
+                                                                            fLCGen(std::chrono::system_clock::now().time_since_epoch().count()),
+                                                                            fUniform(-0.01, 0.01),
+                                                                            fPitch(asin((fFocalPlane - fPosition).data.y)),
+                                                                            fYaw(atan2((fFocalPlane - fPosition).data.z, (fFocalPlane - fPosition).data.x))
                      
   {
+    updateDirections();
   }
 
   CameraModel::~CameraModel()
@@ -32,23 +33,19 @@ namespace eng
     fFocalPlane += pos; //Look in the same direction so that translating has the effect of strafing
   }
 
-  //The rodriges formula for rotating one vector about another: https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-  cl::float3 CameraModel::rodrigesFormula(const cl::float3 vector, const cl::float3 about, const float angle) const
-  {
-    assert(fabs(about.mag() - 1.) < 0.001 && "Trying to rotate a CameraModel about a vector that isn't a unit vector!");
-    return vector*cos(angle) +  about.cross(vector)*sin(angle) + about*(about.dot(vector))*(1 - cos(angle));
-  }
-
   void CameraModel::yaw(const float angle)
   {
-    fFocalPlane = rodrigesFormula(fFocalPlane - fPosition, fUp, angle) + fPosition;
-    fRight = fUp.cross(fFocalPlane - fPosition).norm();
+    fYaw += angle;
+    updateDirections();
   }
 
   void CameraModel::pitch(const float angle)
   {
-    fFocalPlane = rodrigesFormula(fFocalPlane - fPosition, fRight, angle) + fPosition;
-    fUp = (fFocalPlane - fPosition).cross(fRight).norm();
+    if(fabs(fabs(fPitch + angle) - M_PI/2.) > M_PI/180.)
+    {
+      fPitch += angle;
+      updateDirections();
+    }
   }
 
   void CameraModel::zoom(const float multiplier)
@@ -56,8 +53,18 @@ namespace eng
     fFocalPlane += (fFocalPlane - fPosition).norm()*multiplier;
   }
 
+  //Anti-aliasing via camera jitter.
   cl_float3 CameraModel::position() const
   {
-    return (fPosition + cl::float3(fUniform(fLCGen), fUniform(fLCGen), fUniform(fLCGen))).data; //TODO: camera jitter here using fUniform and fLCGen
+    return (fPosition + cl::float3(fUniform(fLCGen), fUniform(fLCGen), fUniform(fLCGen))).data;
+  }
+
+  //Simple Euler-angle based camera from https://learnopengl.com/code_viewer_gh.php?code=includes/learnopengl/camera.h
+  void CameraModel::updateDirections()
+  {
+    cl::float3 direction{cos(fYaw)*cos(fPitch), sin(fPitch), sin(fYaw)*cos(fPitch)};
+    fFocalPlane = direction*(fFocalPlane - fPosition).mag() + fPosition;
+    fRight = cl::float3{0., 1., 0.}.cross(direction).norm();
+    fUp = direction.cross(fRight).norm();
   }
 }

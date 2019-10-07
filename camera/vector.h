@@ -148,6 +148,13 @@ namespace cl
   class vector
   {
     public:
+      //Default constructor is the 0 vector
+      vector()
+      {
+        //TODO: unroll at compile time?
+        for(unsigned long int pos = 0ul; pos < SIZE; ++pos) data.s[pos] = 0;
+      }
+
       //constructor from initializer list
       vector(const std::initializer_list<TYPE> values)
       {

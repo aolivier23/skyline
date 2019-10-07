@@ -17,7 +17,7 @@ namespace eng
   class CameraModel
   {
     public:
-      CameraModel(const cl::float3& pos, const cl::float3& focal = {0., 0., 1.}, const cl::float3& up = {0., 1., 0.});
+      CameraModel(const cl::float3& pos, const cl::float3& focal = {0., 0., 1.});
       virtual ~CameraModel();
 
       //Manipulate the camera
@@ -43,7 +43,11 @@ namespace eng
       mutable std::uniform_real_distribution<float> fUniform;
 
     private:
-      cl::float3 rodrigesFormula(const cl::float3 vector, const cl::float3 about, const float angle) const;
+      void updateDirections();
+
+      //Euler angles
+      float fPitch;
+      float fYaw;
   };
 }
 
