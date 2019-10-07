@@ -39,7 +39,7 @@ float3 trace(ray thisRay, const unsigned long int nBounces, __global aabb* geome
     //If this ray didn't intersect anything, it goes to the background and doesn't come back.  This should only happen for debugging because the ray would be outside the skybox!
     if(closestDist < 0)
     {
-      return lightColor + maskColor*(float3)(0., 0., 1.);
+      return lightColor + maskColor*(float3)(0., 0., 1.); //The debugging background is blue
     }
 
     //Reflect thisRay for next simulation step
@@ -50,8 +50,8 @@ float3 trace(ray thisRay, const unsigned long int nBounces, __global aabb* geome
     const float theta = random(&mySeed), phi = 2.f*M_PI*random(&mySeed);
     //I'm doing a cross product with the y axis unless this vector is along the y axis.  So, I know the result without
     //some multiplication by 0 steps that a cross product would imply.
-    const float3 localXAxis = normalize((normAtIntersection.x > 0.1f)?(float3)(normAtIntersection.z, 0.f, -normAtIntersection.x)
-                                                                     :(float3)(0.f, -normAtIntersection.z, normAtIntersection.y));
+    const float3 localXAxis = normalize((fabs(normAtIntersection.x) > 0.1f)?(float3)(normAtIntersection.z, 0.f, -normAtIntersection.x)
+                                                                           :(float3)(0.f, -normAtIntersection.z, normAtIntersection.y));
     const float3 localYAxis = cross(normAtIntersection, localXAxis);
    
     thisRay.position = thisRay.position + thisRay.direction*closestDist + normAtIntersection*0.0003f; //sqrt(FLT_EPSILON)
