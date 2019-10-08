@@ -6,4 +6,4 @@ add_library(camera CameraController.cpp CameraModel.cpp FPSController.cpp WithCa
 target_link_libraries(camera OpenCL)
 install(TARGETS camera DESTINATION lib)
 
-install(FILES View.h vector.h CameraController.h CameraModel.h FPSController.h WithCamera.h DESTINATION include/engine)
+install(FILES View.h vector.h YAMLIntegration.h CameraController.h CameraModel.h FPSController.h WithCamera.h DESTINATION include/engine)

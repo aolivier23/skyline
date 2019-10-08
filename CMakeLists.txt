@@ -21,6 +21,9 @@ include_directories( ${OPENCL_INCLUDE_DIR} )
 find_package( glfw3 3.2 REQUIRED )
 include_directories( ${GLFW3_INCLUDE_DIR} )
 
+#YAML parser library for configuration
+find_package( yaml-cpp REQUIRED )
+
 #Support for glad
 add_library(glad SHARED glad/src/glad.c)
 target_include_directories("glad" PRIVATE "glad/include")
@@ -42,6 +45,7 @@ add_subdirectory(camera)
 add_subdirectory(serial)
 add_subdirectory(app)
 add_subdirectory(kernels)
+add_subdirectory(examples)
 
 #install setup script
 configure_file(setup.sh.in setup.sh)

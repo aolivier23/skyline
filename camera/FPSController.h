@@ -18,7 +18,7 @@ namespace eng
   class FPSController: public CameraController
   {
     public:
-      FPSController(std::unique_ptr<CameraModel>&& model, const float moveSpeed, const float zoomSpeed,
+      FPSController(CameraModel& model, const float moveSpeed, const float zoomSpeed,
                     const double mouseX = 0., const double mouseY = 0.);
       virtual ~FPSController();
 

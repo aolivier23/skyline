@@ -14,8 +14,8 @@
 
 namespace eng
 {
-  FPSController::FPSController(std::unique_ptr<CameraModel>&& model, const float moveSpeed, const float zoomSpeed,
-                               const double mouseX, const double mouseY): CameraController(std::move(model), mouseX, mouseY), 
+  FPSController::FPSController(CameraModel& model, const float moveSpeed, const float zoomSpeed,
+                               const double mouseX, const double mouseY): CameraController(model, mouseX, mouseY), 
                                                                           fMoveSpeed(moveSpeed), fZoomSpeed(zoomSpeed)
   {
   }

@@ -1,0 +1,46 @@
+#Example of what a YAML file for skyline could look like.
+#Basically, just a couple of maps denoted by keywords.
+#Boxes in the world volume and the skybox itself reference
+#the materials map by name rather than by YAML anchor to
+#better reflect the memory hierarchy needed for the GPU.
+materials:
+  lightMaterial:
+    color: [0., 0., 0.]
+    emission: [9., 8., 6.]
+  
+  boxMaterial:
+    color: [0.56640625, 0.56640625, 0.46875000]
+    emission: [0., 0., 0.]
+  
+  wallMaterial:
+    color: [1., 0.64453125, 0.]
+    emission: [0., 0., 0.]
+
+geometry:
+  #TODO: Allow more BVH information here?  oneCell will just ignore it
+  #      anyway.  Eventually, some really smart BVH algorithm could
+  #      cache what it learned at runtime here...
+  lightBox:
+    width: [0.5, 0.5, 0.5]
+    center: [0., 1.05, -0.5]
+    material: "lightMaterial"
+
+  myFirstBox:
+    width: [0.1, 0.2, 0.3]
+    center: [-0.5, -0.8, -0.3]
+    material: "boxMaterial"
+
+  anotherBox:
+    width: [0.3, 0.6, 0.2]
+    center: [0.6, -0.4, -0.1]
+    material: "boxMaterial"
+
+skybox: #Really the walls for the demonstration
+  width: [2., 2., 2.]
+  center: [0., 0., 0.]
+  material: "wallMaterial"
+
+cameras:
+  default:
+    position: [0., 0.2, 0.9]
+    focal: [0., 0.2, 0.0]

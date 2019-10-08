@@ -3,6 +3,9 @@
 //       convenience of doing calculations in the host thread.
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+#ifndef CL_VECTOR_H
+#define CL_VECTOR_H
+
 //OpenCL includes
 #include <CL/cl_platform.h>
 
@@ -309,3 +312,5 @@ namespace cl
   CL_WRAPPER(double, 3)
   CL_WRAPPER(double, 2)
 }
+
+#endif //CL_VECTOR_H

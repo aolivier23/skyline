@@ -16,7 +16,7 @@ namespace eng
   class CameraController
   {
     public:
-      CameraController(std::unique_ptr<CameraModel>&& model, const double mouseX = 0., const double mouseY = 0.);
+      CameraController(CameraModel& model, const double mouseX = 0., const double mouseY = 0.);
       virtual ~CameraController();
 
       //Hooks for GLFW callbacks.  They return true if anything changed.
@@ -26,11 +26,11 @@ namespace eng
       //virtual bool OnScreenSizeChange(double width, double height);
 
       //Control behavior of CameraController
-      void SetModel(std::unique_ptr<CameraModel>&& model); //Forget old model and start managing a new one
+      void SetModel(CameraModel& model); //Forget old model and start managing a new one
       CameraModel& model();
 
     protected:
-      std::unique_ptr<CameraModel> fModel; //Model of where the camera is
+      CameraModel* fModel; //Observer pointer to model of where the camera is
 
       //Cache previous position of mouse
       double fPrevMouseX;

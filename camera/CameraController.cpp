@@ -7,11 +7,11 @@
 
 namespace eng
 {
-  CameraController::CameraController(std::unique_ptr<eng::CameraModel>&& model,
+  CameraController::CameraController(eng::CameraModel& model,
                                      const double mouseX, const double mouseY): fModel(nullptr), fPrevMouseX(mouseX), 
                                                                                 fPrevMouseY(mouseY)
   {
-    SetModel(std::move(model));
+    SetModel(model);
   }
 
   CameraController::~CameraController()
@@ -37,9 +37,9 @@ namespace eng
     return HandleScroll(xoffset, yoffset);
   }
 
-  void CameraController::SetModel(std::unique_ptr<CameraModel>&& model)
+  void CameraController::SetModel(CameraModel& model)
   {
-    fModel = std::move(model);
+    fModel = &model;
   }
 
   CameraModel& CameraController::model()
