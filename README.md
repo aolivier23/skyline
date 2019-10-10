@@ -68,6 +68,33 @@ level.
 - Material selection
 - Support for mipmapping-like manipulations for textures?  Think of windows.
 
+###GUI Notes
+
+- Main GUI components: Camera, object editor/selection, Save As, and renderer control.
+- Everything except Camera GUI panel needs to be contained in builder?  Maybe object editor is only builder-specific GUI element?
+- Camera GUI shared with skyline
+- Multiple cameras -> select one in list tree (constant depth of 2)
+- Click on a camera to choose
+- Expand a camera to see its parameters
+- Camera parameters include position and focal position
+- Also expose details of CameraController?  Seems like virtual functions enter here.  It doesn't need to be a plugin, so handle specific cases.
+- Concept of object selection: Run ray tracing stage on host.  Can probably reuse aabb\_intersect.  Associate name/metadata with object in container.
+  No BVH needed because shouldn't be performance bottleneck.  CTRL + click for multi-selection.
+- TODO: How to highlight?  Specific color for highlighted objects?
+- Can drag object along ground -> alternative mouse mode to Camera -> mouse mode selector?  Maybe ALT + click instead?  Or camera could follow mouse
+  directly?  Sounds like integration with different CameraControllers.  I can always match CameraController to mouse mode in builder itself.
+- Material and object editor.  For now, just need to adjust width (vector).  Eventually want file chooser for textures.  Just color and emission for now.
+- Eventually stack objects into a "local model"?  Only in object editor.  How would hierarchies interact with BVH?  With YAML?
+- Serialization logic for Save As specific to builder.  Save As button pops up a dialog window.
+- Renderer control: "scene persistence", samples per frame, and framerate
+- TODO: Update whole scene at once every time something changes?  How to handle transition to editing a single object?
+- TODO: Draw grid?  Sounds like rasterization on top of raytracing.  Use/generate a grid texture instead?  Grid control seems very messy.
+- Stretch: Some plots like framerate could be VERY powerful for BVH optimization.  Could even load new kernels dynamically!
+- Separate geometry format from metadata with mapping from aabb pointers to metadata.
+- TODO: Make sure raytracing engine is modular.  It should be easy to transplant into both sklyine and external applications as a library that
+        knows nothing about Dear IMGUI/yaml-cpp.
+- TODO: Special handling for the skybox?  I will eventually want a different texture on the ground.
+
 ##AABB algorithm
 
 - Many city blocks are axis-aligned

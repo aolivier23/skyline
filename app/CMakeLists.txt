@@ -6,3 +6,7 @@ install(FILES CmdLine.h DESTINATION include)
 add_executable(oneCell oneCell.cpp)
 target_link_libraries(oneCell CmdLine OpenGL OpenCL glfw glad mygl camera engine)
 install(TARGETS oneCell DESTINATION bin)
+
+add_executable(builder builder.cpp)
+target_link_libraries(builder CmdLine OpenGL OpenCL glfw glad mygl camera engine imgui)
+install(TARGETS builder DESTINATION bin)

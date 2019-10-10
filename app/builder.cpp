@@ -1,7 +1,8 @@
-//File: oneCell.cpp
-//Brief: Render a room with a few boxes via path tracing.
-//       Proof of concept for skyline.  See CmdLine.cpp
-//       for usage.
+//File: builder.cpp
+//Brief: Edit a skyline geometry file with a GUI.  Also lets the user
+//       explore the scene with the skyline engine and serialize the
+//       current geometry into a file for skyline to consume.  See
+//       CmdLine.cpp for usage.
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //OpenCL includes
@@ -27,6 +28,11 @@
 //camera includes
 #include "camera/WithCamera.h"
 #include "camera/FPSController.h"
+
+//imgui includes
+#include "imgui/imgui.h"
+#include "imgui/examples/imgui_impl_glfw.h"
+#include "imgui/examples/imgui_impl_opengl3.h"
 
 //c++ includes
 #include <iostream>
@@ -119,6 +125,16 @@ int main(const int argc, const char** argv)
                 << " returning an error.\n";
       return SETUP_ERROR;
     }
+
+    //Set up Dear ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    auto& io = ImGui::GetIO();
+
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 420");
   
     //Get the first GPU device among all platforms that matches the current OpenGL context
     std::vector<cl::Platform> platforms;
@@ -251,7 +267,6 @@ int main(const int argc, const char** argv)
     glfwGetCursorPos(window, &initX, &initY);
     ::changeWithWindowSize change(window, ctx,
                                   std::make_unique<eng::FPSController>(params.cameras.front(), 0.05, 0.02, initX, initY));
-    //change.ConnectStandaloneCamera(window);
   
     //Set up geometry to send to the GPU.  It was read in from the command line in a file.
     cl::Buffer geometry(ctx, params.boxes.begin(), params.boxes.end(), false);
@@ -262,6 +277,14 @@ int main(const int argc, const char** argv)
     //Render loop that calls OpenCL kernel
     while(!glfwWindowShouldClose(window))
     {
+      //Set up Dear ImGui
+      ImGui_ImplOpenGL3_NewFrame();
+      ImGui_ImplGlfw_NewFrame();
+      ImGui::NewFrame();
+
+      //TODO: Does this work?
+
+      //Run the skyline engine
       try
       {
         std::vector<cl::Memory> mem = {*(change.glImage)};
@@ -270,6 +293,25 @@ int main(const int argc, const char** argv)
                       *(change.clImage), geometry, params.boxes.size(), materials, skyboxes, change.camera().position(),
                       change.camera().focalPlane(), change.camera().up(), change.camera().right(), 4, change.seeds,
                       ++change.nIterations);
+
+        //Draw GUI while kernel is running
+        //TODO: Don't let the camera change if io.WantCaptureMouse or io.WantCaptureKeyboard.
+        //      Does this require me to re-design CameraController?  There's got to be a way
+        //      to at least make ImGui emulate GLFW's callbacks.
+        //
+        //      There is an option to NOT install Dear ImGui's callbacks when it's initialized.
+        //      I still don't see a way around calculating whether Dear ImGui wants the mouse
+        //      when dispatching events to the camera.  Seems like the most straightfoward approach
+        //      is to cache GLFW events which Dear ImGui probably already does anyway.
+        //
+        //      I should attack this problem from the perspective of emulating GLFW's callbacks
+        //      with Dear ImGui's state.  Reading the GLFW callbacks that Dear ImGui installs
+        //      might help.
+        #ifndef NDEBUG
+          bool showMetrics = true;
+          ImGui::ShowMetricsWindow(&showMetrics);
+        #endif
+
         queue.finish();
         queue.enqueueReleaseGLObjects(&mem);
       }
@@ -280,9 +322,17 @@ int main(const int argc, const char** argv)
       }
   
       change.render(queue);
+
+      //Render DearImGui
+      ImGui::Render();
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
       glfwSwapBuffers(window);
       glfwPollEvents(); //TODO: This could cause the old OpenCL buffer to be thrown away.  Then, I'll be copying uninitialized memory
                         //      on the next frame.
+
+      //Update camera using ImGui state
+      if(!io.WantCaptureMouse && 
     }
   }
   catch(const app::CmdLine::exception& e)
@@ -290,6 +340,10 @@ int main(const int argc, const char** argv)
     std::cerr << e.what();
     return CMD_LINE_ERROR;
   }
+
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
 
   glfwTerminate();
   return SUCCESS;
