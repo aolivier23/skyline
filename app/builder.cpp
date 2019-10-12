@@ -83,6 +83,46 @@ namespace
                           //larger causes the scene to blur more rather than be disrupted by bad sampling.
       }
   };
+
+  bool handleCamera(eng::WithCamera& view, const ImGuiIO& io)
+  {
+    auto& camera = *view.fCamController;
+    bool cameraChanged = false;
+    if(!io.WantCaptureMouse)
+    {
+      if(camera.OnMouseMotion(ImGui::IsMouseDragging(), ImGui::GetMousePos().x, ImGui::GetMousePos().y)) cameraChanged = true;
+
+      if(io.MouseWheel != 0 || io.MouseWheelH != 0)
+      {
+        if(camera.OnScroll(io.MouseWheelH, io.MouseWheel)) cameraChanged = true;
+      }
+    }
+                                             
+    if(!io.WantCaptureKeyboard)
+    {
+      std::cout << "The camera can use the keyboard.\n";
+      //TODO: If there's ever a CameraController that needs more keys, this
+      //      line needs to know about them.
+      //TODO: Why can't I detect keys being pressed?!
+      for(const auto button: {GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT})
+      {
+        std::cout << "Checking button " << button << "...\nIs it down?  " << std::boolalpha << io.KeysDown[button] << "\nHas is been pressed?  " << std::boolalpha << ImGui::IsKeyPressed(button) << "\n";
+        if(ImGui::IsKeyPressed(button))
+        {
+          if(camera.OnKeyPress(button, -1, GLFW_PRESS, 0)) cameraChanged = true;
+        }
+        else if(ImGui::IsKeyReleased(button))
+        {
+          if(camera.OnKeyPress(button, -1, GLFW_RELEASE, 0)) cameraChanged = true;
+        }
+      }
+    }
+    else std::cout << "The camera cannot use the keyboard!\n";
+                                             
+    if(cameraChanged) view.onCameraChange();
+
+    return cameraChanged;
+  }
 }
 
 int main(const int argc, const char** argv)
@@ -126,16 +166,6 @@ int main(const int argc, const char** argv)
       return SETUP_ERROR;
     }
 
-    //Set up Dear ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    auto& io = ImGui::GetIO();
-
-    ImGui::StyleColorsDark();
-
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 420");
-  
     //Get the first GPU device among all platforms that matches the current OpenGL context
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
@@ -268,6 +298,17 @@ int main(const int argc, const char** argv)
     ::changeWithWindowSize change(window, ctx,
                                   std::make_unique<eng::FPSController>(params.cameras.front(), 0.05, 0.02, initX, initY));
   
+    //Set up Dear ImGui
+    //N.B.: This has to happen after changeWithWindowSize is constructed to override the GLFW keyboard handler.
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    auto& io = ImGui::GetIO();
+
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 420");
+
     //Set up geometry to send to the GPU.  It was read in from the command line in a file.
     cl::Buffer geometry(ctx, params.boxes.begin(), params.boxes.end(), false);
     cl::Buffer materials(ctx, params.materials.begin(), params.materials.end(), false);
@@ -331,8 +372,7 @@ int main(const int argc, const char** argv)
       glfwPollEvents(); //TODO: This could cause the old OpenCL buffer to be thrown away.  Then, I'll be copying uninitialized memory
                         //      on the next frame.
 
-      //Update camera using ImGui state
-      if(!io.WantCaptureMouse && 
+      ::handleCamera(change, io);
     }
   }
   catch(const app::CmdLine::exception& e)

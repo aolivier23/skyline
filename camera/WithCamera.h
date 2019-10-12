@@ -23,7 +23,10 @@ namespace eng
 
       const eng::CameraModel& camera() const;
 
-     private:
+      static void registerWithGLFW(GLFWwindow* window);
+
+     //TODO: Hack to integrate Dear ImGui quickly.  Hide these features from the user again.
+     //private:
       //Optional interface to make other scene updates when the camera is changed in any way
       virtual void onCameraChange();
 

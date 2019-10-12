@@ -35,7 +35,7 @@ namespace eng
     return false; //No change to model
   }
 
-  bool FPSController::HandleKey(int key, int scancode, int action, int mods)
+  bool FPSController::HandleKey(int key, int /*scancode*/, int action, int /*mods*/)
   {
     if(action == GLFW_RELEASE) return false;
    

@@ -20,7 +20,15 @@ namespace eng
     //TODO: On camera interaction, throw away depth buffer with glClear()?  Maybe I can reuse
     //      part of the scene when the camera moves or zooms?
     glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1); //Keep mouse down until it is polled
+  }
 
+  WithCamera::~WithCamera()
+  {
+  }
+
+  //TODO: Ideally, WithCamera doesn't depend on GLFW at all.
+  void WithCamera::registerWithGLFW(GLFWwindow* window)
+  {
     glfwSetKeyCallback(window, [](auto window, int key, int scancode, int action, int mode)
                                {
                                  if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
@@ -30,7 +38,7 @@ namespace eng
                                    if(view->fCamController->OnKeyPress(key, scancode, action, mode)) view->onCameraChange();
                                  }
                                });
-  
+                                                                                                                                         
     glfwSetCursorPosCallback(window, [](auto window, const double x, const double y)
                                      {
                                        auto view = (WithCamera*)(glfwGetWindowUserPointer(window));
@@ -39,16 +47,12 @@ namespace eng
                                          view->onCameraChange();
                                        }
                                      });
-  
+                                                                                                                                         
     glfwSetScrollCallback(window, [](auto window, const double xOff, const double yOff)
                                   {
                                     auto view = (WithCamera*)(glfwGetWindowUserPointer(window)); 
                                     if(view->fCamController->OnScroll(xOff, yOff)) view->onCameraChange();
                                   });
-  }
-
-  WithCamera::~WithCamera()
-  {
   }
 
   const eng::CameraModel& WithCamera::camera() const

@@ -251,7 +251,7 @@ int main(const int argc, const char** argv)
     glfwGetCursorPos(window, &initX, &initY);
     ::changeWithWindowSize change(window, ctx,
                                   std::make_unique<eng::FPSController>(params.cameras.front(), 0.05, 0.02, initX, initY));
-    //change.ConnectStandaloneCamera(window);
+    change.registerWithGLFW(window);
   
     //Set up geometry to send to the GPU.  It was read in from the command line in a file.
     cl::Buffer geometry(ctx, params.boxes.begin(), params.boxes.end(), false);
