@@ -282,7 +282,7 @@ int main(const int argc, const char** argv)
         app::drawCameras(params, change);
         app::drawMetrics(io);
         app::drawHelp();
-        app::drawEngine(change);
+        if(app::drawEngine(change)) change.onCameraChange();
         ImGui::EndMainMenuBar();
       }
 

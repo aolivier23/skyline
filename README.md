@@ -144,3 +144,46 @@ level.
   positions?
 - Optimize per frame or per bounce?  Seems like former will be a handul, but automating
   latter could be really cool.
+
+##Selection Algorithm
+
+- Some key press or GUI element triggers "selection mode".  I'm thinking about CTRL + click right now.
+  I eventually want the concept of selecting multiple boxes to move at once.
+- Path trace all boxes except skybox on the CPU.  If limits performance one day, I could
+  try passing back an index from a secondary GPU.
+- Compare distance to closest box to distance to skybox.
+- If skybox is closer, create a new box with some default parameters and select it.
+- If an existing box is closer, it's selected.
+- Focus on selected box.  There is a GUI window with box and material properties for the selected box.
+  Literally focus the camera on center of the selection (new CameraModel functionality).  One day, it
+  might be nice to have a totally different CameraController for a "texture editing mode" to work on
+  a box or a model itself rather than its global position.
+- Dragging the focused box moves it in the plane of the ground.  Seems like fPosition and fUp, fRight,
+  and fFocalPlane should be enough to translate mouse pixel to global position.  One day, it might be
+  interesting if the camera follows the selected box.
+- One day, it might be interesting to have a different mouse mode when working on a selected box.
+  Dragging the mouse over that box would change its dimension in the direction in which the mouse
+  is dragged.  I would figure out which dimension to change by getting the normal at the clicked point
+  (part of the ray tracing kernel).  I have to be able to see the side of the box I want to expand,
+  so it would be important to be able to switch quickly from dragging mode to controlling the camera.
+  Instead, maybe I could just provide a camera on each side of the box when it's selected.
+- I've described 3 mouse operation modes: "normal" camera mode, "global" edit mode, and "local" edit mode.
+  Moving from one mode to another at a minimum means redirecting mouse input.  I probably also want to
+  change out the CameraController in at least "local" edit mode.  Each mode could have a virtual function
+  that handles camera movement.  Sounds a little like the "state machine" design I ended up with when
+  parallelizing edepViewer.  I guess there's also per-state data: selected object in each edit mode.  Each
+  mouse mode might also want to do something before rendering.  The edit modes in particular want to uploadToGPU()
+  any time something has changed.
+- Any time there is a click when CTRL is down and IMGUI does not want the mouse, I am going to enter selection
+  mode.  I guess the raytrace is actually part of the state transition to global edit mode.  If the selection ray
+  trace starts taking longer than a frame, I guess I could have a "waiting" mode like in edepViewer.  How do I get to
+  local edit mode?  I'm thinking about a button for local edit mode in a GUI that global edit mode draws.  Closing
+  the edit mode window goes back to normal camera mode.
+- I'd like to be able to highlight the selected object, but I have no idea how to do that yet.  Maybe I could apply
+  some (not OpenCL) kernel to the framebuffer for edge detection?  I guess I could change the selected object's
+  emission spectrum.
+- I always want to draw the main menu bar.
+- I should clean up any special edit mode cameras when I go back to normal camera mode.
+- Each of these three modes is a MouseController.  A MouseController has a handleInput() function and a drawGUI()
+  function.  In edepViewer, I was marginally successful returning a `std::unique_ptr<State>` from every function
+  that could result in a state change.

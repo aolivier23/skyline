@@ -39,7 +39,9 @@ namespace app
 
   //Show a window for controlling the skyline engine.  Exposes features like
   //the number of bounces per frame and number of samples per frame.
-  void drawEngine(eng::WithRandomSeeds& engine);
+  //Returns true if and only if engine parameters changed and the scene needs
+  //to be updated.
+  bool drawEngine(eng::WithRandomSeeds& engine);
 }
 
 #endif //APP_GUI_H
