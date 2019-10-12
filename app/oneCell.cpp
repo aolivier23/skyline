@@ -262,9 +262,7 @@ int main(const int argc, const char** argv)
   change.registerWithGLFW(window);
 
   //Set up geometry to send to the GPU.  It was read in from the command line in a file.
-  cl::Buffer geometry(ctx, params.boxes.begin(), params.boxes.end(), false);
-  cl::Buffer materials(ctx, params.materials.begin(), params.materials.end(), false);
-  cl::Buffer skyboxes(ctx, &params.skybox, &params.skybox + 1, false);
+  params.sendToGPU(ctx);
   cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
 
   //Render loop that calls OpenCL kernel
@@ -275,7 +273,7 @@ int main(const int argc, const char** argv)
       std::vector<cl::Memory> mem = {*(change.glImage)};
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
-                    *(change.clImage), geometry, params.boxes.size(), materials, skyboxes, change.camera().position(),
+                    *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position(),
                     change.camera().focalPlane(), change.camera().up(), change.camera().right(), 4, change.seeds,
                     ++change.nIterations);
       queue.finish();

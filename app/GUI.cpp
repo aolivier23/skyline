@@ -110,7 +110,7 @@ namespace app
 
     if(isOpen)
     {
-      ImGui::Begin("Cameras", &isOpen);
+      ImGui::Begin("Camera", &isOpen);
       cl::float3 newPos = view.fCamController->model().exactPosition();
       if(ImGui::InputFloat3("Position", newPos.data.s, ImGuiInputTextFlags_EnterReturnsTrue))
       {
@@ -118,7 +118,7 @@ namespace app
         view.onCameraChange();
       }
 
-      if(ImGui::CollapsingHeader("Active Cameras"))
+      if(ImGui::CollapsingHeader("Perspectives"))
       {
         for(auto& camera: app.cameras)
         {
@@ -142,6 +142,9 @@ namespace app
         }
         ImGui::EndPopup();
       }
+
+      //TODO: Provide a list of CameraControllers?
+
       ImGui::End();
     }
   }

@@ -11,6 +11,10 @@
 #include <exception>
 #include <fstream>
 
+//OpenCL includes
+#define __CL_ENABLE_EXCEPTIONS //OpenCL c++ API now throws exceptions
+#include <CL/cl.hpp>
+
 //app includes
 #include "app/CmdLine.h"
 
@@ -84,9 +88,9 @@ namespace app
 
       for(const auto& mat: matMap)
       {
-        nameToMaterialIndex[mat.first.as<std::string>()] = materials.size();
+        nameToMaterialIndex[mat.first.as<std::string>()] = fMaterials.size();
         //Default color is color of my first 3D rendered triangle from learnopengl.com
-        materials.push_back(material{mat.second["color"].as<cl::float3>(cl::float3{1., 0.64453125, 0.}).data,
+        fMaterials.push_back(material{mat.second["color"].as<cl::float3>(cl::float3{1., 0.64453125, 0.}).data,
                                      mat.second["emission"].as<cl::float3>(cl::float3()).data});
       }
 
@@ -94,17 +98,17 @@ namespace app
       const auto& boxMap = document["geometry"];
       for(const auto& box: boxMap)
       {
-        nameToBoxIndex[box.first.as<std::string>()] = boxes.size();
+        nameToBoxIndex[box.first.as<std::string>()] = fBoxes.size();
         const auto material = nameToMaterialIndex.find(box.second["material"].as<std::string>());
         if(material == nameToMaterialIndex.end()) throw exception("Failed to look up a material named " + box.second["material"].as<std::string>()
                                                              + " for a box named " + box.first.as<std::string>());
-        boxes.push_back(aabb{box.second["width"].as<cl::float3>().data, box.second["center"].as<cl::float3>().data,
+        fBoxes.push_back(aabb{box.second["width"].as<cl::float3>().data, box.second["center"].as<cl::float3>().data,
                              material->second});
       }
 
       const auto skyMaterial = nameToMaterialIndex.find(document["skybox"]["material"].as<std::string>());
       if(skyMaterial == nameToMaterialIndex.end()) throw exception("Failed to lookup material for the skybox named " + document["skybox"]["material"].as<std::string>());
-      skybox = {document["skybox"]["width"].as<cl::float3>().data, document["skybox"]["center"].as<cl::float3>().data,
+      fSkybox = {document["skybox"]["width"].as<cl::float3>().data, document["skybox"]["center"].as<cl::float3>().data,
                 skyMaterial->second};
 
       //TODO: This would be a great time to associate CameraModels with metadata like a name for some GUI.
@@ -135,23 +139,23 @@ namespace app
     for(const auto& inMemory: nameToMaterialIndex)
     {
       auto inFile = mats[inMemory.first];
-      inFile["color"] = cl::float3(materials[inMemory.second].color);
-      inFile["emission"] = cl::float3(materials[inMemory.second].emission);
+      inFile["color"] = cl::float3(fMaterials[inMemory.second].color);
+      inFile["emission"] = cl::float3(fMaterials[inMemory.second].emission);
     }
 
     auto geom = newFile["geometry"];
     for(const auto& inMemory: nameToBoxIndex)
     {
       auto inFile = geom[inMemory.first];
-      inFile["width"] = cl::float3(boxes[inMemory.second].width);
-      inFile["center"] = cl::float3(boxes[inMemory.second].center);
-      inFile["material"] = materialIndexToName[boxes[inMemory.second].material];
+      inFile["width"] = cl::float3(fBoxes[inMemory.second].width);
+      inFile["center"] = cl::float3(fBoxes[inMemory.second].center);
+      inFile["material"] = materialIndexToName[fBoxes[inMemory.second].material];
     }
 
     auto sky = newFile["skybox"];
-    sky["width"] = cl::float3(skybox.width);
-    sky["center"] = cl::float3(skybox.center);
-    sky["material"] = materialIndexToName[skybox.material];
+    sky["width"] = cl::float3(fSkybox.width);
+    sky["center"] = cl::float3(fSkybox.center);
+    sky["material"] = materialIndexToName[fSkybox.material];
 
     auto cams = newFile["cameras"];
     for(const auto& inMemory: cameras)
@@ -170,5 +174,12 @@ namespace app
 
   CmdLine::exception::exception(const std::string& why): std::runtime_error(why + "\n\n" + USAGE)
   {
+  }
+
+  void CmdLine::sendToGPU(cl::Context& ctx)
+  {
+    fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
+    fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
+    fDevSkybox = cl::Buffer(ctx, &fSkybox, &fSkybox + 1, false);
   }
 }

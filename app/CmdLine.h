@@ -38,20 +38,14 @@ namespace app
 
       YAML::Node write(const std::string& fileName);
 
-      //Serialized data to upload to the GPU
-      //TODO: Deny the user direct access to these objects so
-      //      that metadata can't get out of sync.  Maybe write
-      //      a function like uploadToGPU() instead?  I'll also
-      //      need const accessors and functions to add new
-      //      materials and boxes.
-      std::vector<material> materials;
-      std::vector<aabb> boxes;
-      aabb skybox;
-
-      //Metadata with references to GPU-ready data
+      //User perspectives on the current scene
       std::vector<std::pair<std::string, eng::CameraModel>> cameras;
-      std::map<std::string, int> nameToMaterialIndex;
-      std::map<std::string, int> nameToBoxIndex;
+
+      //Application handles to data on the GPU
+      inline const cl::Buffer& materials() const { return fDevMaterials; }
+      inline const cl::Buffer& boxes() const { return fDevBoxes; }
+      inline const cl::Buffer& skybox() const { return fDevSkybox; }
+      inline size_t nBoxes() const { return fBoxes.size(); }
 
       //Custom exception class to explain why the command line couldn't be parsed.
       class exception: public std::runtime_error
@@ -60,5 +54,24 @@ namespace app
           exception(const std::string& why);
           virtual ~exception() = default;
       };
+
+      //Upload host-side state to the GPU
+      void sendToGPU(cl::Context& ctx);
+
+    private:
+      //Serialized data that's matched to metadata.  This is a copy of
+      //the data on the GPU.
+      std::vector<material> fMaterials;
+      std::vector<aabb> fBoxes;
+      aabb fSkybox;
+
+      //Metadata with references to GPU-ready data
+      std::map<std::string, int> nameToMaterialIndex;
+      std::map<std::string, int> nameToBoxIndex;
+
+      //Data on the GPU
+      cl::Buffer fDevMaterials;
+      cl::Buffer fDevBoxes;
+      cl::Buffer fDevSkybox;
   };
 }

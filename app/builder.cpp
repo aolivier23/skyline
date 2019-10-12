@@ -77,7 +77,6 @@ namespace
         nIterations = 0;
       };
 
-    private:
       virtual void onCameraChange() override
       {
         nIterations = 10; //Weight the Scene starts with when the camera moves.  Basically, making this number
@@ -279,9 +278,7 @@ int main(const int argc, const char** argv)
   ImGui_ImplOpenGL3_Init("#version 420");
 
   //Set up geometry to send to the GPU.  It was read in from the command line in a file.
-  cl::Buffer geometry(ctx, params.boxes.begin(), params.boxes.end(), false);
-  cl::Buffer materials(ctx, params.materials.begin(), params.materials.end(), false);
-  cl::Buffer skyboxes(ctx, &params.skybox, &params.skybox + 1, false);
+  params.sendToGPU(ctx);
   cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
 
   //Render loop that calls OpenCL kernel
@@ -292,15 +289,13 @@ int main(const int argc, const char** argv)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    //TODO: Does this work?
-
     //Run the skyline engine
     try
     {
       std::vector<cl::Memory> mem = {*(change.glImage)};
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
-                    *(change.clImage), geometry, params.boxes.size(), materials, skyboxes, change.camera().position(),
+                    *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position(),
                     change.camera().focalPlane(), change.camera().up(), change.camera().right(), 4, change.seeds,
                     ++change.nIterations);
 
@@ -309,7 +304,11 @@ int main(const int argc, const char** argv)
       //Draw GUI while kernel is running
       if(ImGui::BeginMainMenuBar())
       {
-        if(app::drawFile(params)) std::cout << "TODO: Reload geometry onto the GPU.\n";
+        if(app::drawFile(params))
+        {
+          params.sendToGPU(ctx);
+          change.onCameraChange();
+        }
         app::drawCameras(params, change);
         app::drawMetrics(io);
         app::drawHelp();
