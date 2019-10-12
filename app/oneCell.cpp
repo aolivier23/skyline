@@ -16,8 +16,10 @@
 #include "app/CmdLine.h"
 
 //camera includes
-#include "camera/WithCamera.h"
 #include "camera/FPSController.h"
+
+//engine includes
+#include "engine/WithRandomSeeds.h"
 
 //GLFW includes
 #include "GLFW/glfw3.h"
@@ -43,39 +45,6 @@ namespace
     CMD_LINE_ERROR,
     SETUP_ERROR,
     RENDER_ERROR
-  };
-
-  class changeWithWindowSize: public eng::WithCamera
-  {
-    public:
-      changeWithWindowSize(GLFWwindow* window, cl::Context& ctx,
-                           std::unique_ptr<eng::CameraController>&& camera): WithCamera(window, ctx, std::move(camera))
-      {
-        std::vector<size_t> hostSeeds(fWidth*fHeight);
-        for(size_t id = 1; id <= fWidth*fHeight; ++id) hostSeeds[id] = id;
-        seeds = cl::Buffer(ctx, hostSeeds.begin(), hostSeeds.end(), false);
-  
-        nIterations = 0;
-      }
-  
-      cl::Buffer seeds;
-      size_t nIterations; //TODO: Store this in the a component of every texture entry?
-  
-      void userResize(const int width, const int height)
-      {
-        std::vector<size_t> hostSeeds(width*height);
-        for(size_t id = 1; id <= width*height; ++id) hostSeeds[id] = id;
-        seeds = cl::Buffer(fContext, hostSeeds.begin(), hostSeeds.end(), false);
-        
-        nIterations = 0;
-      };
-
-    private:
-      virtual void onCameraChange() override
-      {
-        nIterations = 10; //Weight the Scene starts with when the camera moves.  Basically, making this number
-                          //larger causes the scene to blur more rather than be disrupted by bad sampling.
-      }
   };
 }
 
@@ -247,7 +216,7 @@ int main(const int argc, const char** argv)
     return SETUP_ERROR;
   }
 
-  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, cl_float3, cl_float3, size_t, cl::Buffer, size_t>(cl::Kernel(program, "pathTrace"));
+  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, cl_float3, cl_float3, int, cl::Buffer, int, int>(cl::Kernel(program, "pathTrace"));
 
   //Set up viewport
   int width, height;
@@ -257,8 +226,8 @@ int main(const int argc, const char** argv)
   //public member functions.
   double initX = 0., initY = 0.;
   glfwGetCursorPos(window, &initX, &initY);
-  ::changeWithWindowSize change(window, ctx,
-                                std::make_unique<eng::FPSController>(params.cameras.front().second, 0.05, 0.02, initX, initY));
+  eng::WithRandomSeeds change(window, ctx,
+                              std::make_unique<eng::FPSController>(params.cameras.front().second, 0.05, 0.02, initX, initY));
   change.registerWithGLFW(window);
 
   //Set up geometry to send to the GPU.  It was read in from the command line in a file.
@@ -274,8 +243,8 @@ int main(const int argc, const char** argv)
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
                     *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position(),
-                    change.camera().focalPlane(), change.camera().up(), change.camera().right(), 4, change.seeds,
-                    ++change.nIterations);
+                    change.camera().focalPlane(), change.camera().up(), change.camera().right(), change.nBounces(), change.seeds(),
+                    ++change.nIterations(), change.nSamples());
       queue.finish();
       queue.enqueueReleaseGLObjects(&mem);
     }

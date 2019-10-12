@@ -13,6 +13,7 @@ class ImGuiIO;
 namespace eng
 {
   class WithCamera;
+  class WithRandomSeeds;
 }
 
 namespace app
@@ -35,6 +36,10 @@ namespace app
   //Show a menu for loading a new geometry or saving the application state to
   //a YAML file.  Returns true if a new file has been loaded into app.
   bool drawFile(app::CmdLine& app);
+
+  //Show a window for controlling the skyline engine.  Exposes features like
+  //the number of bounces per frame and number of samples per frame.
+  void drawEngine(eng::WithRandomSeeds& engine);
 }
 
 #endif //APP_GUI_H

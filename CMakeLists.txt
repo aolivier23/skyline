@@ -41,7 +41,9 @@ add_definitions(-DINSTALL_DIR="${CMAKE_INSTALL_PREFIX}")
 
 #Include build system for the rest of this project.  Add new top-level directories here.
 add_subdirectory(gl)
+add_subdirectory(algebra)
 add_subdirectory(camera)
+add_subdirectory(engine)
 add_subdirectory(serial)
 add_subdirectory(imgui)
 add_subdirectory(app)

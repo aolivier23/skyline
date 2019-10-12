@@ -7,7 +7,7 @@
 #define ENG_CAMERAMODEL_H
 
 //local includes
-#include "camera/vector.h"
+#include "algebra/vector.h"
 
 //c++ includes
 #include <random>

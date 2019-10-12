@@ -10,8 +10,11 @@
 #include "app/CmdLine.h"
 
 //camera includes
-#include "camera/WithCamera.h"
 #include "camera/CameraController.h"
+
+//engine includes
+#include "engine/WithCamera.h"
+#include "engine/WithRandomSeeds.h"
 
 //Dear ImGui includes
 #include "imgui/imgui.h"
@@ -330,5 +333,21 @@ namespace app
     //      creating a new skybox.
 
     return false;
+  }
+
+  void drawEngine(eng::WithRandomSeeds& engine)
+  {
+    static bool isOpen = false;
+    const bool clicked = ImGui::MenuItem("engine");
+    if(!isOpen) isOpen = clicked;
+
+    if(isOpen)
+    {
+      ImGui::Begin("engine", &isOpen);
+      ImGui::InputInt("Bounces per Frame", &engine.nBounces(), ImGuiInputTextFlags_EnterReturnsTrue);
+      ImGui::InputInt("Latency", &engine.latency(), ImGuiInputTextFlags_EnterReturnsTrue);
+      ImGui::InputInt("Samples per Frame", &engine.nSamples(), ImGuiInputTextFlags_EnterReturnsTrue);
+      ImGui::End();
+    }
   }
 }

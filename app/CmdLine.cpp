@@ -19,7 +19,7 @@
 #include "app/CmdLine.h"
 
 //camera includes
-#include "camera/YAMLIntegration.h"
+#include "algebra/YAMLIntegration.h"
 
 //Usage of all skyline applications.
 //TODO: Customize the program description for each application.

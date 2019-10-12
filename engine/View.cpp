@@ -4,7 +4,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //engine includes
-#include "camera/View.h"
+#include "engine/View.h"
 
 //OpenCL includes
 #define __CL_ENABLE_EXCEPTIONS //OpenCL c++ API now throws exceptions

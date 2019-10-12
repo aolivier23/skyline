@@ -8,7 +8,7 @@
 #define ENG_WITHCAMERA_H
 
 //engine includes
-#include "camera/View.h"
+#include "engine/View.h"
 
 namespace eng
 {

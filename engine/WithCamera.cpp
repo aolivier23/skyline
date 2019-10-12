@@ -4,7 +4,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //engine includes
-#include "camera/WithCamera.h"
+#include "engine/WithCamera.h"
 #include "camera/CameraModel.h"
 #include "camera/CameraController.h"
 

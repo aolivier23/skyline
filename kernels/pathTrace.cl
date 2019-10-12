@@ -91,14 +91,13 @@ ray generateRay(const int2 pixel, const float3 cameraPos, const float3 focalPos,
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
                         const unsigned long int nBoxes, __global material* materials, __global aabb* skybox,
                         const float3 cameraPos, const float3 focalPos, const float3 up, const float3 right,
-                        const long unsigned int nBounces, __global size_t* seeds, long unsigned int iterations)
+                        const int nBounces, __global size_t* seeds, const int iterations, const int nSamplesPerFrame)
 {
   const int2 pixel = (int2)(get_global_id(0), get_global_id(1));
   
   float4 pixelColor = read_imagef(prev, sampler, pixel)*(1.f-1.f/(float)iterations);
 
-  const long unsigned int nSamplesPerFrame = 1; //TODO: Make this a kernel argument
-  
+  //TODO: Reuse first intersection for each sample
   for(size_t sample = 0; sample < nSamplesPerFrame; ++sample)
   {
     ray thisRay = generateRay(pixel, cameraPos, focalPos, up, right, get_global_size(0), get_global_size(1));
