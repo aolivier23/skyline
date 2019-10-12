@@ -26,8 +26,12 @@ namespace eng
       void pitch(const float angle);
       void zoom(const float multiplier);
 
+      //User interface
+      void setPosition(const cl::float3 newPosition);
+
       //Accessors to Camera properties that are useful to send to OpenGL
       cl_float3 position() const;
+      inline const cl::float3 exactPosition() const { return fPosition; } //Without camera jitter
       inline const cl_float3& focalPlane() const { return fFocalPlane.data; }
       inline const cl_float3& up() const { return fUp.data; }
       inline const cl_float3& right() const { return fRight.data; }

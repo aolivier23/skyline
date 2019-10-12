@@ -26,6 +26,13 @@ namespace eng
   {
   }
 
+  //Allow the user to configure the camera's position
+  void CameraModel::setPosition(const cl::float3 newPosition)
+  {
+    fFocalPlane += newPosition - fPosition;
+    fPosition = newPosition;
+  }
+
   void CameraModel::translate(const cl::float3& pos)
   {
     fPosition += pos;

@@ -21,17 +21,27 @@
 //camera includes
 #include "camera/CameraModel.h"
 
+//yaml-cpp includes
+#include "yaml-cpp/yaml.h"
+
 namespace app
 {
   class CmdLine
   {
     public:
-      CmdLine(const int argc, const char** argv);
+      //Create an empty application state.
+      CmdLine() = default;
+
+      //Serialization and de-serialization
+      YAML::Node load(const int argc, const char** argv);
+      YAML::Node load(const std::string& fileName);
+
+      YAML::Node write(const std::string& fileName);
 
       std::vector<material> materials;
       std::vector<aabb> boxes;
       aabb skybox;
-      std::vector<eng::CameraModel> cameras;
+      std::vector<std::pair<std::string, eng::CameraModel>> cameras;
 
       //Custom exception class to explain why the command line couldn't be parsed.
       class exception: public std::runtime_error

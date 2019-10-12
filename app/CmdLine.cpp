@@ -19,9 +19,6 @@
 //camera includes
 #include "camera/YAMLIntegration.h"
 
-//yaml-cpp includes
-#include "yaml-cpp/yaml.h"
-
 //Usage of all skyline applications.
 //TODO: Customize the program description for each application.
 #define USAGE "Usage: oneCell <configuration.yaml>\n\n"\
@@ -53,12 +50,20 @@
 
 namespace app
 {
-  CmdLine::CmdLine(const int argc, const char** argv)
+  YAML::Node CmdLine::load(const int argc, const char** argv)
   {
     //argv[0] is always the path to this application.  So, the number of command line arguments is really argc - 1, and
     //I'm going to ignore argv[0].
     if(argc != 2) throw exception("Got " + std::to_string(argc-1) + " command line arguments, but expected excatly 1");
     if(!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) throw exception("");
+
+    return load(argv[1]);
+  }
+
+  YAML::Node CmdLine::load(const std::string& fileName)
+  {
+    //The document into which I will try to load a YAML file
+    YAML::Node document;
 
     try
     {
@@ -67,14 +72,13 @@ namespace app
       YAML::Node document;
       try
       {
-        document = YAML::LoadFile(argv[1]);
+        document = YAML::LoadFile(fileName);
       }
       catch(YAML::Exception& /*e*/)
       {
-        document = YAML::LoadFile(std::string(INSTALL_DIR) + "/include/examples/" + argv[1]);
+        document = YAML::LoadFile(std::string(INSTALL_DIR) + "/include/examples/" + fileName);
       }
 
-      std::cout << "Starting to use the YAML file.\n";
       //Map the YAML configuration file to a geometry to render using a few keywords
       const auto& matMap = document["materials"];
       std::map<std::string, int> matNameToIndex;
@@ -107,15 +111,21 @@ namespace app
       const auto& cameraMap = document["cameras"];
       for(const auto& camera: cameraMap)
       {
-        cameras.emplace_back(camera.second["position"].as<cl::float3>().data, camera.second["focal"].as<cl::float3>().data);
+        cameras.emplace_back(camera.first.as<std::string>(), eng::CameraModel(camera.second["position"].as<cl::float3>().data, camera.second["focal"].as<cl::float3>().data));
       }
-
-      std::cout << "Sizes of vectors:\nmaterials: " << materials.size() << "\nboxes: " << boxes.size() << "\ncameras: " << cameras.size() << "\n";
     }
     catch(const YAML::Exception& e)
     {
       throw exception(e.what());
     }
+
+    return document;
+  }
+
+  YAML::Node write(const std::string& fileName)
+  {
+    YAML::Node newFile(fileName);
+    return newFile;
   }
 
   CmdLine::exception::exception(const std::string& why): std::runtime_error(why + "\n\n" + USAGE)
