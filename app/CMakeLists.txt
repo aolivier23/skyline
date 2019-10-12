@@ -4,7 +4,7 @@ install(TARGETS CmdLine DESTINATION lib)
 install(FILES CmdLine.h DESTINATION include)
 
 add_library(gui GUI.cpp)
-target_link_libraries(gui camera imgui)
+target_link_libraries(gui camera imgui stdc++fs CmdLine)
 install(TARGETS gui DESTINATION lib)
 install(FILES GUI.h DESTINATION include)
 

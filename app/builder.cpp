@@ -309,7 +309,7 @@ int main(const int argc, const char** argv)
       //Draw GUI while kernel is running
       if(ImGui::BeginMainMenuBar())
       {
-        app::drawFile(params);
+        if(app::drawFile(params)) std::cout << "TODO: Reload geometry onto the GPU.\n";
         app::drawCameras(params, change);
         app::drawMetrics(io);
         app::drawHelp();

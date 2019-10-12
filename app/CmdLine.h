@@ -38,10 +38,20 @@ namespace app
 
       YAML::Node write(const std::string& fileName);
 
+      //Serialized data to upload to the GPU
+      //TODO: Deny the user direct access to these objects so
+      //      that metadata can't get out of sync.  Maybe write
+      //      a function like uploadToGPU() instead?  I'll also
+      //      need const accessors and functions to add new
+      //      materials and boxes.
       std::vector<material> materials;
       std::vector<aabb> boxes;
       aabb skybox;
+
+      //Metadata with references to GPU-ready data
       std::vector<std::pair<std::string, eng::CameraModel>> cameras;
+      std::map<std::string, int> nameToMaterialIndex;
+      std::map<std::string, int> nameToBoxIndex;
 
       //Custom exception class to explain why the command line couldn't be parsed.
       class exception: public std::runtime_error

@@ -9,9 +9,7 @@
 
 //c++ includes
 #include <exception>
-
-//TODO: Remove me
-#include <iostream>
+#include <fstream>
 
 //app includes
 #include "app/CmdLine.h"
@@ -60,6 +58,8 @@ namespace app
     return load(argv[1]);
   }
 
+  //TODO: Only print usage information in version that takes argc and argv.
+  //      Let exceptions propagate in this version.
   YAML::Node CmdLine::load(const std::string& fileName)
   {
     //The document into which I will try to load a YAML file
@@ -81,11 +81,10 @@ namespace app
 
       //Map the YAML configuration file to a geometry to render using a few keywords
       const auto& matMap = document["materials"];
-      std::map<std::string, int> matNameToIndex;
 
       for(const auto& mat: matMap)
       {
-        matNameToIndex[mat.first.as<std::string>()] = materials.size();
+        nameToMaterialIndex[mat.first.as<std::string>()] = materials.size();
         //Default color is color of my first 3D rendered triangle from learnopengl.com
         materials.push_back(material{mat.second["color"].as<cl::float3>(cl::float3{1., 0.64453125, 0.}).data,
                                      mat.second["emission"].as<cl::float3>(cl::float3()).data});
@@ -95,15 +94,16 @@ namespace app
       const auto& boxMap = document["geometry"];
       for(const auto& box: boxMap)
       {
-        const auto material = matNameToIndex.find(box.second["material"].as<std::string>());
-        if(material == matNameToIndex.end()) throw exception("Failed to look up a material named " + box.second["material"].as<std::string>()
+        nameToBoxIndex[box.first.as<std::string>()] = boxes.size();
+        const auto material = nameToMaterialIndex.find(box.second["material"].as<std::string>());
+        if(material == nameToMaterialIndex.end()) throw exception("Failed to look up a material named " + box.second["material"].as<std::string>()
                                                              + " for a box named " + box.first.as<std::string>());
         boxes.push_back(aabb{box.second["width"].as<cl::float3>().data, box.second["center"].as<cl::float3>().data,
                              material->second});
       }
 
-      const auto skyMaterial = matNameToIndex.find(document["skybox"]["material"].as<std::string>());
-      if(skyMaterial == matNameToIndex.end()) throw exception("Failed to lookup material for the skybox named " + document["skybox"]["material"].as<std::string>());
+      const auto skyMaterial = nameToMaterialIndex.find(document["skybox"]["material"].as<std::string>());
+      if(skyMaterial == nameToMaterialIndex.end()) throw exception("Failed to lookup material for the skybox named " + document["skybox"]["material"].as<std::string>());
       skybox = {document["skybox"]["width"].as<cl::float3>().data, document["skybox"]["center"].as<cl::float3>().data,
                 skyMaterial->second};
 
@@ -122,9 +122,49 @@ namespace app
     return document;
   }
 
-  YAML::Node write(const std::string& fileName)
+  YAML::Node CmdLine::write(const std::string& fileName)
   {
-    YAML::Node newFile(fileName);
+    //"Invert" the mapping in nameToMaterialIndex
+    std::vector<std::string> materialIndexToName(nameToMaterialIndex.size());
+    for(const auto& name: nameToMaterialIndex) materialIndexToName[name.second] = name.first;
+
+    //Serialize the application state.
+    YAML::Node newFile;
+
+    auto mats = newFile["materials"];
+    for(const auto& inMemory: nameToMaterialIndex)
+    {
+      auto inFile = mats[inMemory.first];
+      inFile["color"] = cl::float3(materials[inMemory.second].color);
+      inFile["emission"] = cl::float3(materials[inMemory.second].emission);
+    }
+
+    auto geom = newFile["geometry"];
+    for(const auto& inMemory: nameToBoxIndex)
+    {
+      auto inFile = geom[inMemory.first];
+      inFile["width"] = cl::float3(boxes[inMemory.second].width);
+      inFile["center"] = cl::float3(boxes[inMemory.second].center);
+      inFile["material"] = materialIndexToName[boxes[inMemory.second].material];
+    }
+
+    auto sky = newFile["skybox"];
+    sky["width"] = cl::float3(skybox.width);
+    sky["center"] = cl::float3(skybox.center);
+    sky["material"] = materialIndexToName[skybox.material];
+
+    auto cams = newFile["cameras"];
+    for(const auto& inMemory: cameras)
+    {
+      auto onFile = cams[inMemory.first];
+      onFile["position"] = inMemory.second.exactPosition();
+      onFile["focal"] = cl::float3(inMemory.second.focalPlane());
+    }
+
+    //Write to a YAML file.
+    std::ofstream output(fileName);
+    output << newFile;
+
     return newFile;
   }
 

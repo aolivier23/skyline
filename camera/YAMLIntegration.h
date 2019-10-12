@@ -23,7 +23,7 @@ namespace YAML
       //of skyline.
       for(size_t which = 0; which < SIZE; ++which)
       {
-        result.push_back(rhs.data[which]);
+        result.push_back(rhs.data.s[which]);
       }
 
       return result;

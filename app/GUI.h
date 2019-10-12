@@ -33,8 +33,8 @@ namespace app
   void drawHelp();
 
   //Show a menu for loading a new geometry or saving the application state to
-  //a YAML file.
-  void drawFile(app::CmdLine& app);
+  //a YAML file.  Returns true if a new file has been loaded into app.
+  bool drawFile(app::CmdLine& app);
 }
 
 #endif //APP_GUI_H

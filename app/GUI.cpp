@@ -22,6 +22,44 @@
 
 //c++ includes
 #include <algorithm>
+#include <experimental/filesystem>
+
+namespace fs = std::experimental::filesystem;
+
+namespace
+{
+  //Recursively draw a tree of directories.  Each entry in the tree can be selected.
+  //Selecting a directory sets pwd.  Selecting a file sets fileName.
+  //Returns true only if fileName was changed.
+  bool directoryTree(const fs::path& path, fs::path& pwd, std::string& fileName)
+  {
+    bool foundFile = false;
+
+    ImGuiTreeNodeFlags flags = fs::is_directory(path)?0:ImGuiTreeNodeFlags_Leaf;
+    const bool open = ImGui::TreeNodeEx(("##" + path.filename().string()).c_str(), flags);
+    ImGui::SameLine(); if(ImGui::Button(path.filename().c_str()))
+    {
+      if(fs::is_directory(path)) pwd = path;
+      else
+      {
+        fileName = path;
+        foundFile = true;
+      }
+    }
+    if(open)
+    {
+      if(fs::is_directory(path))
+      {
+        for(const auto& child: fs::directory_iterator(path))
+        {
+          if(directoryTree(child, pwd, fileName)) foundFile = true;
+        }
+      }
+      ImGui::TreePop();
+    }
+    return foundFile;
+  }
+}
 
 namespace app
 {
@@ -173,13 +211,121 @@ namespace app
     }
   }
 
-  void drawFile(app::CmdLine& app)
+  //Draw a file selection window if the "file" menu item is clicked.
+  //Allows the user to load a new CmdLine from a file.  The file is selected
+  //from a list tree rooted in a working directory internal to this function.
+  //Returns true if a new file was loaded.
+  bool drawFile(app::CmdLine& app)
   {
+    static bool showOpen = false, showSave = false;
+
     if(ImGui::BeginMenu("file"))
     {
-      if(ImGui::MenuItem("open")) {} //TODO: File browser for YAML files
-      if(ImGui::MenuItem("save as")) {} //TODO: Save As menu -> serialization logic
+      ImGui::MenuItem("open", "CTRL+o", &showOpen);
+      ImGui::MenuItem("save as", "CTRL+s", &showSave);
+
       ImGui::EndMenu();
     }
+
+    if(showOpen)
+    {
+      ImGui::Begin("Open", &showOpen);
+
+      //Show the components of the current working directory like the top of the Ubuntu 18 file browser.
+      static fs::path pwd = fs::current_path();
+      auto foundDir = pwd.end();
+
+      for(auto dirPtr = pwd.begin(); dirPtr != pwd.end(); ++dirPtr)
+      {
+        ImGui::SameLine();
+        if(ImGui::Button(dirPtr->filename().c_str())) foundDir = dirPtr;
+        ImGui::SameLine();
+        ImGui::Text("/");
+      }
+
+      //If the user selected a new directory, make it the working directory for this GUI.
+      //The OS's pwd remains the same.
+      if(foundDir != pwd.end())
+      {
+        fs::path newPwd;
+        for(auto dir = pwd.begin(); dir != std::next(foundDir); ++dir) newPwd /= *dir;
+        pwd = newPwd;
+      }
+
+      //Show a directory tree rooted in pwd
+      std::string fileName;
+      if(::directoryTree(pwd, pwd, fileName))
+      {
+        app::CmdLine newFile;
+        try
+        {
+          newFile.load(fileName);
+          app = newFile;
+          showOpen = false;
+          ImGui::End();
+          return true;
+        }
+        catch(const CmdLine::exception& e)
+        {
+          //TODO: Warn the user somehow that we couldn't open fileName
+        }
+      }
+
+      ImGui::End();
+    }
+
+    if(showSave)
+    {
+      ImGui::Begin("Save As", &showSave);
+
+      //Show the components of the current working directory like the top of the Ubuntu 18 file browser.
+      static fs::path pwd = fs::current_path();
+      auto foundDir = pwd.end();
+
+      for(auto dirPtr = pwd.begin(); dirPtr != pwd.end(); ++dirPtr)
+      {
+        ImGui::SameLine();
+        if(ImGui::Button(dirPtr->filename().c_str())) foundDir = dirPtr;
+        ImGui::SameLine();
+        ImGui::Text("/");
+      }
+
+      //If the user selected a new directory, make it the working directory for this GUI.
+      //The OS's pwd remains the same.
+      if(foundDir != pwd.end())
+      {
+        fs::path newPwd;
+        for(auto dir = pwd.begin(); dir != std::next(foundDir); ++dir) newPwd /= *dir;
+        pwd = newPwd;
+      }
+
+      //Allow the user to enter a file name in the current directory.
+      static std::string fileName;
+      if(ImGui::InputText("Save As", &fileName, ImGuiInputTextFlags_EnterReturnsTrue))
+      {
+        try
+        {
+          app.write(fileName);
+        }
+        catch(const YAML::Exception& e)
+        {
+          //TODO: Warn the user that serialization failed?
+        }
+
+        showSave = false;
+      }
+
+      //Show a directory tree rooted in pwd.
+      //Only used for selecting a new pwd.
+      std::string unusedFileName;
+      ::directoryTree(pwd, pwd, unusedFileName);
+
+      ImGui::End();
+    }
+
+    //TODO: Load a model by adding to the current CmdLine?  I'd have to be clever and avoid
+    //      creating a new skybox.
+
+    return false;
   }
 }
