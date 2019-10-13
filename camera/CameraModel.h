@@ -30,11 +30,11 @@ namespace eng
       void setPosition(const cl::float3 newPosition);
 
       //Accessors to Camera properties that are useful to send to OpenGL
-      cl_float3 position() const;
+      cl::float3 position() const;
       inline const cl::float3 exactPosition() const { return fPosition; } //Without camera jitter
-      inline const cl_float3& focalPlane() const { return fFocalPlane.data; }
-      inline const cl_float3& up() const { return fUp.data; }
-      inline const cl_float3& right() const { return fRight.data; }
+      inline const cl::float3& focalPlane() const { return fFocalPlane; }
+      inline const cl::float3& up() const { return fUp; }
+      inline const cl::float3& right() const { return fRight; }
 
     protected:
       //Camera description

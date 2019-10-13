@@ -17,6 +17,9 @@
 #include "app/CmdLine.h"
 #include "app/GUI.h"
 
+//algorithms borrowed from OpenCL kernel
+#include "kernels/generateRay.cl"
+
 //camera includes
 #include "camera/FPSController.h"
 
@@ -197,6 +200,10 @@ int main(const int argc, const char** argv)
   std::istreambuf_iterator<char> randomBegin(random);
   source.append(randomBegin, fileEnd);
 
+  std::ifstream generator(INSTALL_DIR "/include/kernels/generateRay.cl");
+  std::istreambuf_iterator<char> generatorBegin(generator);
+  source.append(generatorBegin, fileEnd);
+
   std::ifstream main(INSTALL_DIR "/include/kernels/pathTrace.cl");
   std::istreambuf_iterator<char> mainBegin(main);
   source.append(mainBegin, fileEnd);
@@ -269,11 +276,27 @@ int main(const int argc, const char** argv)
       std::vector<cl::Memory> mem = {*(change.glImage)};
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
-                    *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position(),
-                    change.camera().focalPlane(), change.camera().up(), change.camera().right(), change.nBounces(), change.seeds(),
+                    *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position().data,
+                    change.camera().focalPlane().data, change.camera().up().data, change.camera().right().data, change.nBounces(), change.seeds(),
                     ++change.nIterations(), change.nSamples());
 
-      app::handleCamera(change, io);
+      if(!io.WantCaptureMouse)
+      {
+        if(ImGui::IsMouseDoubleClicked(0))
+        {
+          const auto pos = ImGui::GetMousePos();
+          //GLFW's pixels have the reverse convention of OpenGL textures in the y direction.  So, I have
+          //to flip pos.y before using it with generateRay().
+          const auto fromCamera = generateRay(cl::int2{pos.x, abs(pos.y - change.fHeight)}, change.camera().exactPosition(),
+                                              change.camera().focalPlane(), change.camera().up(),
+                                              change.camera().right(), change.fWidth, change.fHeight);
+
+          auto [selected, mat, name] = params.select(fromCamera);
+          std::cout << "Selected a box named " << name << "\n";
+          params.sendToGPU(ctx);
+        }
+        else app::handleCamera(change, io);
+      }
 
       //Draw GUI while kernel is running
       if(ImGui::BeginMainMenuBar())

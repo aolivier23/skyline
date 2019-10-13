@@ -190,6 +190,10 @@ int main(const int argc, const char** argv)
   std::istreambuf_iterator<char> randomBegin(random);
   source.append(randomBegin, fileEnd);
 
+  std::ifstream generator(INSTALL_DIR "/include/kernels/generateRay.cl");
+  std::istreambuf_iterator<char> generatorBegin(generator);
+  source.append(generatorBegin, fileEnd);
+
   std::ifstream main(INSTALL_DIR "/include/kernels/pathTrace.cl");
   std::istreambuf_iterator<char> mainBegin(main);
   source.append(mainBegin, fileEnd);
@@ -246,8 +250,8 @@ int main(const int argc, const char** argv)
       std::vector<cl::Memory> mem = {*(change.glImage)};
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
-                    *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position(),
-                    change.camera().focalPlane(), change.camera().up(), change.camera().right(), change.nBounces(), change.seeds(),
+                    *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position().data,
+                    change.camera().focalPlane().data, change.camera().up().data, change.camera().right().data, change.nBounces(), change.seeds(),
                     ++change.nIterations(), change.nSamples());
       queue.finish();
       queue.enqueueReleaseGLObjects(&mem);

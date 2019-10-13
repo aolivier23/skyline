@@ -11,6 +11,9 @@
 #include <exception>
 #include <fstream>
 
+//TODO: Remove me
+#include <iostream>
+
 //OpenCL includes
 #define __CL_ENABLE_EXCEPTIONS //OpenCL c++ API now throws exceptions
 #include <CL/cl.hpp>
@@ -202,12 +205,14 @@ namespace app
       }
     }
 
-    auto distToSkybox = aabb_intersect(&fSkybox, fromCamera);
-    if(distToSkybox < 0) distToSkybox = std::numeric_limits<float>::max(); //This should only happen if we're outside the skybox
-    if(!(found != fBoxes.end() && closest < distToSkybox))
+    //If I couldn't find a box, create one.
+    //I'm assuming that there are no boxes outside fSkybox.
+    if(found == fBoxes.end())
     {
+      const auto distToSkybox = aabb_intersect(&fSkybox, fromCamera);
+      assert(distToSkybox > 0 && "The user clicked on something outside the skybox!");
       const auto intersection = fromCamera.position + fromCamera.direction * distToSkybox;
-      boxNames[fBoxes.size()] = "defaultBox";
+      boxNames.push_back("defaultBox");
       fBoxes.push_back(aabb{cl::float3{0.1, 0.1, 0.1}, cl::float3{intersection.x, 0., intersection.z}, fSkybox.material});
       found = std::prev(fBoxes.end());
     }

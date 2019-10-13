@@ -15,6 +15,11 @@
   using std::min;
   using std::max;
   #define FLT_EPSILON CL_FLT_EPSILON
+  template <class VECTOR>
+  VECTOR normalize(const VECTOR& vec)
+  {
+    return vec.norm();
+  }
 #else
   #define CL(type) type
   #define SCALAR(type) type

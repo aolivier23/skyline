@@ -61,9 +61,9 @@ namespace eng
   }
 
   //Anti-aliasing via camera jitter.
-  cl_float3 CameraModel::position() const
+  cl::float3 CameraModel::position() const
   {
-    return (fPosition + cl::float3(fUniform(fLCGen), fUniform(fLCGen), fUniform(fLCGen))).data;
+    return fPosition + cl::float3(fUniform(fLCGen), fUniform(fLCGen), fUniform(fLCGen));
   }
 
   //Simple Euler-angle based camera from https://learnopengl.com/code_viewer_gh.php?code=includes/learnopengl/camera.h

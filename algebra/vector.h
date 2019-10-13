@@ -186,13 +186,6 @@ namespace cl
       {
       }
 
-      //BASE_TYPE data; //OpenCL memory-aligned type with underlying data
-      /*using COMPONENT_TYPE = decltype(std::declval<BASE_TYPE>().x); //Doesn't work because I need data
-      COMPONENT_TYPE x;
-      COMPONENT_TYPE y;
-      std::enable_if<SIZE > 2, COMPONENT_TYPE>::type z;
-      std::enable_if<SIZE > 2, COMPONENT_TYPE>::type w;*/
-
       //Multiplication by a scalar
       vector<TYPE, SIZE, BASE_TYPE>operator *(const TYPE scalar) const
       {
@@ -289,6 +282,142 @@ namespace cl
       }
   };
 
+  //Only include x and y components for size-2 vector<>
+  template <class TYPE, class BASE_TYPE>
+  union vector<TYPE, 2, BASE_TYPE>
+  {
+    public:
+      using COMPONENT_TYPE = decltype(std::declval<BASE_TYPE>().x);
+      BASE_TYPE data;
+      struct { COMPONENT_TYPE x, y; };
+
+      //Default constructor is the 0 vector
+      vector()
+      {
+        //TODO: unroll at compile time?
+        for(unsigned long int pos = 0ul; pos < 2; ++pos) data.s[pos] = 0;
+      }
+
+      //constructor from initializer list
+      vector(const std::initializer_list<TYPE> values)
+      {
+        //TODO: unroll at compile time
+        for(unsigned long int pos = 0ul; pos < 2; ++pos) data.s[pos] = *(values.begin() + pos);
+      }
+
+      //Constructor from BASE_TYPE
+      vector(const BASE_TYPE otherBase)
+      {
+        data = otherBase;
+      }
+
+      //constructor from another vector to avoid infinite recursion on the next constructor
+      vector(const vector<TYPE, 2, BASE_TYPE>& other): data(other.data)
+      {
+      }
+
+      //constructor from components
+      template <class ...ARGS>
+      vector(ARGS... args): vector({args...})
+      {
+      }
+
+      //Multiplication by a scalar
+      vector<TYPE, 2, BASE_TYPE>operator *(const TYPE scalar) const
+      {
+        return ::For<BASE_TYPE, 2, 2-1>::each(data, [scalar](const auto& value) { return value * scalar; });
+      }
+
+      vector<TYPE, 2, BASE_TYPE>operator /(const TYPE scalar) const
+      {
+        return ::For<BASE_TYPE, 2, 2-1>::each(data, [scalar](const auto& value) { return value / scalar; });
+      }
+
+      //Vector addition
+      vector<TYPE, 2, BASE_TYPE>operator +(const vector<TYPE, 2, BASE_TYPE>& other) const
+      {
+        return ::For<BASE_TYPE, 2, 2-1>::each(data, other.data, [](const auto& lhs, const auto& rhs) { return lhs + rhs; });
+      }
+
+      vector<TYPE, 2, BASE_TYPE>operator -(const vector<TYPE, 2, BASE_TYPE>& other) const
+      {
+        return ::For<BASE_TYPE, 2, 2-1>::each(data, other.data, [](const auto& lhs, const auto& rhs) { return lhs - rhs; });
+      }
+
+      //Hadderhad product: multiply each component of each vectortogether
+      vector<TYPE, 2, BASE_TYPE>operator *(const vector<TYPE, 2, BASE_TYPE>& other) const
+      {
+        return ::For<BASE_TYPE, 2, 2-1>::each(data, other.data, [](const auto& lhs, const auto& rhs) { return lhs * rhs; });
+      }
+
+      //Perform operations that modify this vector in place
+      vector<TYPE, 2, BASE_TYPE>& operator *=(const TYPE scalar)
+      {
+        ::For<BASE_TYPE, 2, 2-1>::each(data, [scalar](auto& value) { value *= scalar; });
+        return *this;
+      }
+
+      vector<TYPE, 2, BASE_TYPE>& operator /=(const TYPE scalar)
+      {
+        ::For<BASE_TYPE, 2, 2-1>::each(data, [scalar](auto& value) { value /= scalar; });
+        return *this;
+      }
+
+      vector<TYPE, 2, BASE_TYPE>& operator +=(const vector<TYPE, 2, BASE_TYPE>& other)
+      {
+        ::For<BASE_TYPE, 2, 2-1>::each(data, other.data, [](auto& lhs, const auto& rhs) { return lhs += rhs; });
+        return *this;
+      }
+
+      vector<TYPE, 2, BASE_TYPE>& operator -=(const vector<TYPE, 2, BASE_TYPE>& other)
+      {
+        ::For<BASE_TYPE, 2, 2-1>::each(data, other.data, [](auto& lhs, const auto& rhs) { return lhs -= rhs; });
+        return *this;
+      }
+
+      //Hadderhad product.  See const version above for explanation.
+      vector<TYPE, 2, BASE_TYPE>& operator *=(const vector<TYPE, 2, BASE_TYPE>& other)
+      {
+        ::For<BASE_TYPE, 2, 2-1>::each(data, other.data, [](const auto& lhs, const auto& rhs) { lhs *= rhs; });
+        return *this;
+      }
+
+      //Dot product
+      TYPE dot(const vector<TYPE, 2, BASE_TYPE>& other) const
+      {
+        TYPE result = 0;
+        ::For<BASE_TYPE, 2, 2-1>::each(data, other.data, [&result](const auto& lhs, const auto& rhs) { return (result += lhs * rhs); });
+        return result;
+      }
+
+      //Cross product is not defined for 2-vectors
+      /*vector<TYPE, 2, BASE_TYPE> cross(const vector<TYPE, 2, BASE_TYPE>& rhs) const
+      {
+        static_assert(2 == 3, "The cross product is only defined for 3-vectors.");
+        return vector<TYPE, 2, BASE_TYPE>{data.y*rhs.data.z - data.z*rhs.data.y,
+                                   data.z*rhs.data.x - data.x*rhs.data.z,
+                                   data.x*rhs.data.y - data.y*rhs.data.x};
+      }*/
+
+      //Magnitude of a vector
+      TYPE mag2() const
+      {
+        return dot(*this);
+      }
+
+      TYPE mag() const
+      {
+        return std::sqrt(mag2());
+      }
+
+      //Normalized version of a vector
+      vector<TYPE, 2, BASE_TYPE> norm() const
+      {
+        assert(mag() != 0 && "Trying to normalize the 0 vector!");
+        return *this * 1./mag();
+      }
+  };
+
   template <class TYPE, unsigned int SIZE, class BASE_TYPE>
   std::ostream& operator <<(std::ostream& os, const vector<TYPE, SIZE, BASE_TYPE>& vec)
   {
@@ -313,15 +442,15 @@ namespace cl
   //TODO: Make this work with cl_float2 by specializing vector<> for SIZE of 2 with just x and y components
   CL_WRAPPER(float, 4)
   CL_WRAPPER(float, 3)
-  //CL_WRAPPER(float, 2)
+  CL_WRAPPER(float, 2)
 
   CL_WRAPPER(int, 4)
   CL_WRAPPER(int, 3)
-  //CL_WRAPPER(int, 2)
+  CL_WRAPPER(int, 2)
 
   CL_WRAPPER(double, 4)
   CL_WRAPPER(double, 3)
-  //CL_WRAPPER(double, 2)
+  CL_WRAPPER(double, 2)
 }
 
 #endif //CL_VECTOR_H

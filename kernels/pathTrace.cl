@@ -71,23 +71,6 @@ float3 trace(ray thisRay, const unsigned long int nBounces, __global aabb* geome
   return lightColor;
 }
 
-//TODO: Camera in gdmlRaytrace used to stretch out scene when turning 90
-//      degrees from starting direction.  That could be caused by a bug
-//      here.
-ray generateRay(const int2 pixel, const float3 cameraPos, const float3 focalPos,
-                const float3 up, const float3 right, unsigned long int width, unsigned long int height)
-{
-  ray thisRay;
-  thisRay.position = cameraPos;
-
-  const float aspectRatio = (float)width / (float)height;
-  const float2 ndc = (float2)((float)pixel.x/(float)width, (float)pixel.y/(float)height);
-  const float3 pixelPos = (ndc.x - 0.5f)*aspectRatio*right + (ndc.y - 0.5f)*up + focalPos;
-  thisRay.direction = normalize(pixelPos - thisRay.position);
-
-  return thisRay;
-}
-
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
                         const unsigned long int nBoxes, __global material* materials, __global aabb* skybox,
                         const float3 cameraPos, const float3 focalPos, const float3 up, const float3 right,
