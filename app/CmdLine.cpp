@@ -18,6 +18,9 @@
 //app includes
 #include "app/CmdLine.h"
 
+//serial includes
+#include "serial/aabb.cpp"
+
 //camera includes
 #include "algebra/YAMLIntegration.h"
 
@@ -98,7 +101,7 @@ namespace app
       const auto& boxMap = document["geometry"];
       for(const auto& box: boxMap)
       {
-        nameToBoxIndex[box.first.as<std::string>()] = fBoxes.size();
+        boxNames.push_back(box.first.as<std::string>());
         const auto material = nameToMaterialIndex.find(box.second["material"].as<std::string>());
         if(material == nameToMaterialIndex.end()) throw exception("Failed to look up a material named " + box.second["material"].as<std::string>()
                                                              + " for a box named " + box.first.as<std::string>());
@@ -144,12 +147,12 @@ namespace app
     }
 
     auto geom = newFile["geometry"];
-    for(const auto& inMemory: nameToBoxIndex)
+    for(size_t whichBox = 0; whichBox < fBoxes.size(); ++whichBox)
     {
-      auto inFile = geom[inMemory.first];
-      inFile["width"] = cl::float3(fBoxes[inMemory.second].width);
-      inFile["center"] = cl::float3(fBoxes[inMemory.second].center);
-      inFile["material"] = materialIndexToName[fBoxes[inMemory.second].material];
+      auto inFile = geom[boxNames[whichBox]];
+      inFile["width"] = cl::float3(fBoxes[whichBox].width);
+      inFile["center"] = cl::float3(fBoxes[whichBox].center);
+      inFile["material"] = materialIndexToName[fBoxes[whichBox].material];
     }
 
     auto sky = newFile["skybox"];
@@ -181,5 +184,34 @@ namespace app
     fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
     fDevSkybox = cl::Buffer(ctx, &fSkybox, &fSkybox + 1, false);
+  }
+
+  //Nobody likes std::tuple<> in c++11, but this project requires c++17.
+  //So, if you're frustrated by this interface, think "structured bindings".
+  std::tuple<aabb&, material&, std::string&> CmdLine::select(const ray fromCamera)
+  {
+    auto found = fBoxes.end();
+    float closest = std::numeric_limits<float>::max();
+    for(auto box = fBoxes.begin(); box != fBoxes.end(); ++box)
+    {
+      const auto dist = aabb_intersect(&*box, fromCamera);
+      if(dist > 0 && dist < closest)
+      {
+        closest = dist;
+        found = box;
+      }
+    }
+
+    auto distToSkybox = aabb_intersect(&fSkybox, fromCamera);
+    if(distToSkybox < 0) distToSkybox = std::numeric_limits<float>::max(); //This should only happen if we're outside the skybox
+    if(!(found != fBoxes.end() && closest < distToSkybox))
+    {
+      const auto intersection = fromCamera.position + fromCamera.direction * distToSkybox;
+      boxNames[fBoxes.size()] = "defaultBox";
+      fBoxes.push_back(aabb{cl::float3{0.1, 0.1, 0.1}, cl::float3{intersection.x, 0., intersection.z}, fSkybox.material});
+      found = std::prev(fBoxes.end());
+    }
+
+    return std::forward_as_tuple(*found, fMaterials[found->material], boxNames[std::distance(fBoxes.begin(), found)]);
   }
 }

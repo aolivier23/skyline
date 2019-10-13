@@ -178,6 +178,10 @@ int main(const int argc, const char** argv)
   std::istreambuf_iterator<char> headerBegin(header);
   source.append(headerBegin, fileEnd);
 
+  std::ifstream functions(INSTALL_DIR "/include/serial/aabb.cpp");
+  std::istreambuf_iterator<char> functionsBegin(functions);
+  source.append(functionsBegin, fileEnd);
+
   std::ifstream materialHeader(INSTALL_DIR "/include/serial/material.h");
   std::istreambuf_iterator<char> materialBegin(materialHeader);
   source.append(materialBegin, fileEnd);

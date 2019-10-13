@@ -145,12 +145,16 @@ namespace cl
   //OpenCL types.  Implemented as a mixin so that BASE provides
   //the data.
   //
-  //BASE must provide a data member that has an array member of TYPE with
+  //BASE_TYPE must provide a data member that has an array member of TYPE with
   //SIZE entries called s.
   template <class TYPE, unsigned int SIZE, class BASE_TYPE>
-  class vector
+  union vector
   {
     public:
+      using COMPONENT_TYPE = decltype(std::declval<BASE_TYPE>().x);
+      BASE_TYPE data;
+      struct { COMPONENT_TYPE x, y, z, w; };
+
       //Default constructor is the 0 vector
       vector()
       {
@@ -182,7 +186,12 @@ namespace cl
       {
       }
 
-      BASE_TYPE data; //OpenCL memory-aligned type with underlying data
+      //BASE_TYPE data; //OpenCL memory-aligned type with underlying data
+      /*using COMPONENT_TYPE = decltype(std::declval<BASE_TYPE>().x); //Doesn't work because I need data
+      COMPONENT_TYPE x;
+      COMPONENT_TYPE y;
+      std::enable_if<SIZE > 2, COMPONENT_TYPE>::type z;
+      std::enable_if<SIZE > 2, COMPONENT_TYPE>::type w;*/
 
       //Multiplication by a scalar
       vector<TYPE, SIZE, BASE_TYPE>operator *(const TYPE scalar) const
@@ -297,20 +306,22 @@ namespace cl
   }
 
   #define CL_WRAPPER(TYPE, SIZE)\
-    using TYPE##SIZE = vector<TYPE, SIZE, cl_##TYPE##SIZE>;
+    using TYPE##SIZE = vector<TYPE, SIZE, cl_##TYPE##SIZE>;\
+    static_assert(sizeof(vector<TYPE, SIZE, cl_##TYPE##SIZE>) == sizeof(cl_##TYPE##SIZE), "vector<> is not aligned to match OpenCL!");
 
   //Define OpenCL vector wrappers
+  //TODO: Make this work with cl_float2 by specializing vector<> for SIZE of 2 with just x and y components
   CL_WRAPPER(float, 4)
   CL_WRAPPER(float, 3)
-  CL_WRAPPER(float, 2)
+  //CL_WRAPPER(float, 2)
 
   CL_WRAPPER(int, 4)
   CL_WRAPPER(int, 3)
-  CL_WRAPPER(int, 2)
+  //CL_WRAPPER(int, 2)
 
   CL_WRAPPER(double, 4)
   CL_WRAPPER(double, 3)
-  CL_WRAPPER(double, 2)
+  //CL_WRAPPER(double, 2)
 }
 
 #endif //CL_VECTOR_H

@@ -8,6 +8,7 @@
 //c++ includes
 #include <exception>
 #include <vector>
+#include <tuple>
 
 //OpenCL c++ API includes
 #include <CL/cl.hpp>
@@ -15,6 +16,7 @@
 //serial includes
 #define NOT_ON_DEVICE
 #include "serial/vector.h"
+#include "serial/ray.h"
 #include "serial/aabb.h"
 #include "serial/material.h"
 
@@ -58,6 +60,10 @@ namespace app
       //Upload host-side state to the GPU
       void sendToGPU(cl::Context& ctx);
 
+      //Select the closest aabb intersected by a ray.  If there is
+      //no such box, create a new one where this ray intersects fSkybox.
+      std::tuple<aabb&, material&, std::string&> select(const ray fromCamera);
+
     private:
       //Serialized data that's matched to metadata.  This is a copy of
       //the data on the GPU.
@@ -67,7 +73,8 @@ namespace app
 
       //Metadata with references to GPU-ready data
       std::map<std::string, int> nameToMaterialIndex;
-      std::map<std::string, int> nameToBoxIndex;
+      std::vector<std::string> boxNames; //I chose to use parallel arrays because I need fBoxes to be tightly packed
+                                         //for upload to the GPU.
 
       //Data on the GPU
       cl::Buffer fDevMaterials;
