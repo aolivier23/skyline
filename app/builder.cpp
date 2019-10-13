@@ -262,6 +262,12 @@ int main(const int argc, const char** argv)
   params.sendToGPU(ctx);
   cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
 
+  //Selection state
+  std::unique_ptr<app::CmdLine::selected> selection;
+  /*std::optional<std::reference_wrapper<aabb>> selectedBox;
+  std::string& selectedName;
+  material& selectedMaterial;*/
+
   //Render loop that calls OpenCL kernel
   while(!glfwWindowShouldClose(window))
   {
@@ -291,9 +297,12 @@ int main(const int argc, const char** argv)
                                               change.camera().focalPlane(), change.camera().up(),
                                               change.camera().right(), change.fWidth, change.fHeight);
 
-          auto [selected, mat, name] = params.select(fromCamera);
-          std::cout << "Selected a box named " << name << "\n";
+          //TODO: CTRL + click for multi-selection
+          selection = std::move(params.select(fromCamera));
+
+          std::cout << "Selected a box named " << selection->name << "\n";
           params.sendToGPU(ctx);
+          change.onCameraChange();
         }
         else app::handleCamera(change, io);
       }
@@ -306,11 +315,24 @@ int main(const int argc, const char** argv)
           params.sendToGPU(ctx);
           change.onCameraChange();
         }
+        //TODO: edit menu with materials and skybox options
         app::drawCameras(params, change);
         app::drawMetrics(io);
         app::drawHelp();
         if(app::drawEngine(change)) change.onCameraChange();
         ImGui::EndMainMenuBar();
+
+        if(selection)
+        {
+          if(app::editBox(selection))
+          {
+            //Only update GPU data if something changed.
+            params.sendToGPU(ctx);
+            change.onCameraChange();
+          }
+
+          //TODO: Material editor logic.  Maybe good enough to just pass change and app into editBox()?  Make sure to put it in the if above.
+        }
       }
 
       queue.finish();

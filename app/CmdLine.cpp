@@ -11,9 +11,6 @@
 #include <exception>
 #include <fstream>
 
-//TODO: Remove me
-#include <iostream>
-
 //OpenCL includes
 #define __CL_ENABLE_EXCEPTIONS //OpenCL c++ API now throws exceptions
 #include <CL/cl.hpp>
@@ -117,6 +114,8 @@ namespace app
       fSkybox = {document["skybox"]["width"].as<cl::float3>().data, document["skybox"]["center"].as<cl::float3>().data,
                 skyMaterial->second};
 
+      fFloorY = fSkybox.center.y - fSkybox.width.y/2.;
+
       //TODO: This would be a great time to associate CameraModels with metadata like a name for some GUI.
       const auto& cameraMap = document["cameras"];
       for(const auto& camera: cameraMap)
@@ -189,9 +188,8 @@ namespace app
     fDevSkybox = cl::Buffer(ctx, &fSkybox, &fSkybox + 1, false);
   }
 
-  //Nobody likes std::tuple<> in c++11, but this project requires c++17.
-  //So, if you're frustrated by this interface, think "structured bindings".
-  std::tuple<aabb&, material&, std::string&> CmdLine::select(const ray fromCamera)
+  //Returning std::unique_ptr<> because I couldn't get std::optional<> to do what I want.
+  std::unique_ptr<CmdLine::selected> CmdLine::select(const ray fromCamera)
   {
     auto found = fBoxes.end();
     float closest = std::numeric_limits<float>::max();
@@ -213,10 +211,11 @@ namespace app
       assert(distToSkybox > 0 && "The user clicked on something outside the skybox!");
       const auto intersection = fromCamera.position + fromCamera.direction * distToSkybox;
       boxNames.push_back("defaultBox");
-      fBoxes.push_back(aabb{cl::float3{0.1, 0.1, 0.1}, cl::float3{intersection.x, 0., intersection.z}, fSkybox.material});
+      fBoxes.push_back(aabb{cl::float3{0.1, 0.1, 0.1}, cl::float3{intersection.x, fFloorY, intersection.z},
+                            fBoxes.empty()?fSkybox.material:fBoxes[0].material});
       found = std::prev(fBoxes.end());
     }
 
-    return std::forward_as_tuple(*found, fMaterials[found->material], boxNames[std::distance(fBoxes.begin(), found)]);
+    return std::make_unique<selected>(selected{*found, fMaterials[found->material], boxNames[std::distance(fBoxes.begin(), found)]});
   }
 }

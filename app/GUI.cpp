@@ -368,4 +368,18 @@ namespace app
 
     return changed;
   }
+
+  bool editBox(std::unique_ptr<CmdLine::selected>& selection)
+  {
+    bool isOpen = true, changed = false;
+    ImGui::Begin(selection->name.c_str(), &isOpen);
+    if(ImGui::InputFloat3("center", selection->box.center.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+    if(ImGui::InputFloat3("size", selection->box.width.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+    //TODO: Material chooser and editor
+    ImGui::End();
+
+    if(!isOpen) selection.reset();
+
+    return changed;
+  }
 }

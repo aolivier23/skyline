@@ -5,6 +5,9 @@
 //       usage information.
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+#ifndef APP_CMDLINE_H
+#define APP_CMDLINE_H
+
 //c++ includes
 #include <exception>
 #include <vector>
@@ -57,12 +60,20 @@ namespace app
           virtual ~exception() = default;
       };
 
+      //References to the data for a selected box
+      struct selected
+      {
+        aabb& box;
+        material& mat;
+        std::string& name;
+      };
+
       //Upload host-side state to the GPU
       void sendToGPU(cl::Context& ctx);
 
       //Select the closest aabb intersected by a ray.  If there is
       //no such box, create a new one where this ray intersects fSkybox.
-      std::tuple<aabb&, material&, std::string&> select(const ray fromCamera);
+      std::unique_ptr<selected> select(const ray fromCamera);
 
     private:
       //Serialized data that's matched to metadata.  This is a copy of
@@ -76,9 +87,14 @@ namespace app
       std::vector<std::string> boxNames; //I chose to use parallel arrays because I need fBoxes to be tightly packed
                                          //for upload to the GPU.
 
+      //Data to help create new boxes
+      float fFloorY; //Height of the bottom of fSkybox in global coordinates
+
       //Data on the GPU
       cl::Buffer fDevMaterials;
       cl::Buffer fDevBoxes;
       cl::Buffer fDevSkybox;
   };
 }
+
+#endif //APP_CMDLINE_H
