@@ -1,1 +1,1 @@
-install(FILES firstBoxes.yaml DESTINATION include/examples)
+install(FILES firstBoxes.yaml sevenBoxes.yaml DESTINATION include/examples)

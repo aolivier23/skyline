@@ -1,0 +1,129 @@
+skybox:
+  width:
+    - 2
+    - 2
+    - 2
+  center:
+    - 0
+    - 0
+    - 0
+  material: wallMaterial
+cameras:
+  default:
+    position:
+      - -0.8500001
+      - 0.2
+      - 0.9499999
+    focal:
+      - -0.224418
+      - -0.188525
+      - 0.4682375
+materials:
+  wallMaterial:
+    emission:
+      - 0
+      - 0
+      - 0
+    color:
+      - 1
+      - 0.6445312
+      - 0
+  boxMaterial:
+    color:
+      - 0.5664062
+      - 0.5664062
+      - 0.46875
+    emission:
+      - 0
+      - 0
+      - 0
+  lightMaterial:
+    emission:
+      - 9
+      - 8
+      - 6
+    color:
+      - 0
+      - 0
+      - 0
+geometry:
+  smallerBuilding:
+    width:
+      - 0.3
+      - 1.7
+      - 0.3
+    center:
+      - 0.4070229
+      - -1
+      - -0.1431279
+    material: boxMaterial
+  Just a House:
+    width:
+      - 0.1
+      - 0.3
+      - 0.1
+    center:
+      - -0.2722979
+      - -1
+      - -0.0979625
+    material: boxMaterial
+  Another House:
+    width:
+      - 0.1
+      - 0.2
+      - 0.1
+    center:
+      - 0.1834614
+      - -1
+      - 0.01263648
+    material: boxMaterial
+  Skyscraper:
+    width:
+      - 0.2
+      - 3
+      - 0.2
+    center:
+      - 0.1668462
+      - -1
+      - 0.3948941
+    material: boxMaterial
+  newName:
+    material: boxMaterial
+    width:
+      - 0.3
+      - 0.6
+      - 0.2
+    center:
+      - 0.6
+      - -0.4
+      - -0.1
+  lightBox:
+    width:
+      - 0.5
+      - 0.5
+      - 0.5
+    material: lightMaterial
+    center:
+      - 0
+      - 1.05
+      - -0.5
+  myFirstBox:
+    width:
+      - 0.1
+      - 0.2
+      - 0.3
+    center:
+      - -0.5
+      - -0.8
+      - -0.3
+    material: boxMaterial
+  box with no name:
+    center:
+      - -0.02026494
+      - -1
+      - -0.3826318
+    material: boxMaterial
+    width:
+      - 0.4
+      - 2.5
+      - 0.4

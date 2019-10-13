@@ -212,7 +212,7 @@ namespace app
       const auto intersection = fromCamera.position + fromCamera.direction * distToSkybox;
       boxNames.push_back("defaultBox");
       fBoxes.push_back(aabb{cl::float3{0.1, 0.1, 0.1}, cl::float3{intersection.x, fFloorY, intersection.z},
-                            fBoxes.empty()?fSkybox.material:fBoxes[0].material});
+                            fBoxes.empty()?fSkybox.material:fBoxes.back().material});
       found = std::prev(fBoxes.end());
     }
 

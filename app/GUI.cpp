@@ -222,6 +222,14 @@ namespace app
         ImGui::ListBoxFooter();
       }
 
+      if(ImGui::ListBoxHeader("Editor"))
+      {
+        ImGui::BulletText("Select a box for editing by double-clicking on it.  The skybox cannot be selected this way.");
+        ImGui::BulletText("Create a new box by clicking on empty space (i.e. the skybox).");
+        ImGui::BulletText("A box is de-selected when a new box is selected or the editor GUI is closed.");
+        ImGui::ListBoxFooter();
+      }
+
       if(ImGui::ListBoxHeader("GUI"))
       {
         ImGui::ShowUserGuide();
@@ -325,7 +333,7 @@ namespace app
       {
         try
         {
-          app.write(fileName);
+          app.write(pwd / fileName);
         }
         catch(const YAML::Exception& e)
         {
@@ -371,10 +379,15 @@ namespace app
 
   bool editBox(std::unique_ptr<CmdLine::selected>& selection)
   {
+    //If I call editBox at all, that means that selection is not nullptr and so the GUI should open.
     bool isOpen = true, changed = false;
-    ImGui::Begin(selection->name.c_str(), &isOpen);
+
+    //Draw a box editor window.
+    ImGui::Begin("Box Editor", &isOpen);
+    ImGui::InputText("name", &selection->name, ImGuiInputTextFlags_EnterReturnsTrue);
     if(ImGui::InputFloat3("center", selection->box.center.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
     if(ImGui::InputFloat3("size", selection->box.width.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+
     //TODO: Material chooser and editor
     ImGui::End();
 
