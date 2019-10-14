@@ -65,8 +65,9 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
 
 float3 hitSky(const ray thisRay, const float3 maskColor, __global material* skyboxMaterial)
 {
-  //TODO: Look up struck emission color from a texture
-  return maskColor*(float3){9.f, 8.f, 6.f}/13.453624f; //skyboxMaterial->emission;
+  //TODO: Look up struck emission color from textures.  I'll need one for each
+  //      of the ceiling and the 4 walls.
+  return maskColor*(float3){9.f, 8.f, 6.f}/13.453624f;
 }
 
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
@@ -113,8 +114,9 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     }
     else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, materials + material);
 
-    pixelColor += (float4)(lightColor, 1.f) / (float)(iterations*nSamplesPerFrame);
+    //pixelColor += (float4)(lightColor, 1.f) / (float)(iterations*nSamplesPerFrame);
   }
+  pixelColor += (float4)(lightColor, 1.f) / (float)(iterations*nSamplesPerFrame);
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame
 
   write_imagef(pixels, pixel, pixelColor);
