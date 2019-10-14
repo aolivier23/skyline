@@ -204,7 +204,8 @@ int main(const int argc, const char** argv)
   std::istreambuf_iterator<char> generatorBegin(generator);
   source.append(generatorBegin, fileEnd);
 
-  std::ifstream main(INSTALL_DIR "/include/kernels/pathTrace.cl");
+  //std::ifstream main(INSTALL_DIR "/include/kernels/pathTrace.cl");
+  std::ifstream main(INSTALL_DIR "/include/kernels/reuseFirstBounce.cl");
   std::istreambuf_iterator<char> mainBegin(main);
   source.append(mainBegin, fileEnd);
 
