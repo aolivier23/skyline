@@ -28,6 +28,8 @@ namespace eng
 
       //User interface
       void setPosition(const cl::float3 newPosition);
+      inline double jitter() const { return fDist.stddev(); }
+      void setJitter(const double stddev);
 
       //Accessors to Camera properties that are useful to send to OpenGL
       cl::float3 position() const;
@@ -43,8 +45,10 @@ namespace eng
       cl::float3 fUp; //"Up" direction for the camera.  Orthogonal to both fFocalPlane and fRight.
       cl::float3 fRight; //"Right" direction for the camera.  Orthogonal to both fFocalPlane and fUp.
 
+      //State for camera jitter.  Implements anti-aliasing.
       mutable std::minstd_rand0 fLCGen;
-      mutable std::uniform_real_distribution<float> fUniform;
+      mutable std::normal_distribution<double> fDist; 
+      //mutable std::uniform_real_distribution<float> fUniform;
 
     private:
       void updateDirections();

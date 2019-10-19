@@ -187,3 +187,32 @@ level.
 - Each of these three modes is a MouseController.  A MouseController has a handleInput() function and a drawGUI()
   function.  In edepViewer, I was marginally successful returning a `std::unique_ptr<State>` from every function
   that could result in a state change.
+
+##Path Tracing Kernel Upgrades
+
+- Next stop: textures for the skybox
+- Realized how to do cubemap on a cube without branching.  Get normal at intersection.
+  For each of 3 directions, take dot product with a vector with magnitude a little bigger
+  than 1.  Truncate to an integer, add 1, and keep track of places as "ternary" numbers.  Index
+  into texture array is sum of 3 directions.  Multiply by 6 (number of textures) to hash
+  textures for different materials.  It's all arithmetic, so there's no branching!
+- Use the above dot product trick to sort rays by material they intersect.  I think I've put
+  rays onto a stack before in some gdmlRaytrace tests.  Basically, the end position of the
+  stack is updated with atomic operations.  Doing that for every face of every cube seems
+  chaotic though.  I guess that's the point of putting all of those engine knobs into the
+  GUI!
+- TODO: Put geometry in `__local`.  Should speed up memory accesses a lot, and I don't expect
+        to ever need more than about 10^3 buildings.  Maybe detect that situation at runtime
+        and use a different kernel.
+- For 2D BVH (city blocks), keep track of current cell as starting point for next bounce.  I'm
+  not yet sure how well variable-sized cells will work out.  If I'm just storing indices to
+  adjacent cells, that's probably OK.  Cell size seems like a good way for an optimizer to
+  play with the geometry asynchronously.
+- More sophisticated camera model: camera height and lens curvature.  For the latter, project
+  pixels onto a sphere instead of a plane.
+- Realized that I do have something to gain from a ray stack when I'm running with multiple
+  samples per frame.  "Fast" pixels can get a starting ray from "slower" pixels to handle one
+  sample.  Seems like samples should be independent given that I can handle all bounces at
+  once.  I remember global atomic operations being a major source of slowdown, so I guess I
+  should only do all of this for rays close to each other.  Swapping out kernels dynamically
+  from the engine GUI is starting to sound more interesting.

@@ -14,7 +14,7 @@ namespace eng
   CameraModel::CameraModel(const cl::float3& pos, const cl::float3& focal): fPosition(pos),
                                                                             fFocalPlane(focal),
                                                                             fLCGen(std::chrono::system_clock::now().time_since_epoch().count()),
-                                                                            fUniform(-0.01, 0.01),
+                                                                            fDist(0., 0.01),
                                                                             fPitch(asin((fFocalPlane - fPosition).data.y)),
                                                                             fYaw(atan2((fFocalPlane - fPosition).data.z, (fFocalPlane - fPosition).data.x))
                      
@@ -63,7 +63,7 @@ namespace eng
   //Anti-aliasing via camera jitter.
   cl::float3 CameraModel::position() const
   {
-    return fPosition + cl::float3(fUniform(fLCGen), fUniform(fLCGen), fUniform(fLCGen));
+    return fPosition + cl::float3(fDist(fLCGen), fDist(fLCGen), fDist(fLCGen));
   }
 
   //Simple Euler-angle based camera from https://learnopengl.com/code_viewer_gh.php?code=includes/learnopengl/camera.h
@@ -73,5 +73,10 @@ namespace eng
     fFocalPlane = direction*(fFocalPlane - fPosition).mag() + fPosition;
     fRight = cl::float3{0., 1., 0.}.cross(direction).norm();
     fUp = direction.cross(fRight).norm();
+  }
+
+  void CameraModel::setJitter(const double stddev)
+  {
+    fDist = std::normal_distribution(0., stddev);
   }
 }

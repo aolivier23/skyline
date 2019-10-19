@@ -135,6 +135,13 @@ namespace app
         view.onCameraChange();
       }
 
+      float jitter = view.fCamController->model().jitter();
+      if(ImGui::InputFloat("Jitter", &jitter, ImGuiInputTextFlags_EnterReturnsTrue))
+      {
+        view.fCamController->model().setJitter(jitter);
+        view.onCameraChange();
+      }
+
       if(ImGui::CollapsingHeader("Perspectives"))
       {
         for(auto& camera: app.cameras)
