@@ -67,7 +67,7 @@ float3 hitSky(const ray thisRay, const float3 maskColor, __global material* skyb
 {
   //TODO: Look up struck emission color from textures.  I'll need one for each
   //      of the ceiling and the 4 walls.
-  return maskColor*(float3){9.f, 8.f, 6.f}/13.453624f;
+  return maskColor*(float3){0.529, 0.808, 0.922}; //Sky blue from https://www.colorhexa.com/87ceeb
 }
 
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
