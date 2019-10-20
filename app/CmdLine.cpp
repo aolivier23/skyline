@@ -24,6 +24,10 @@
 //camera includes
 #include "algebra/YAMLIntegration.h"
 
+//stb includes
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image/stb_image.h"
+
 //Usage of all skyline applications.
 //TODO: Customize the program description for each application.
 #define USAGE "Usage: oneCell <configuration.yaml>\n\n"\
@@ -116,7 +120,29 @@ namespace app
 
       fFloorY = fSkybox.center.y - fSkybox.width.y/2.;
 
-      //TODO: This would be a great time to associate CameraModels with metadata like a name for some GUI.
+      //Load textures
+      //TODO: Read textures from YAML file instead of materials.  Replace materials entirely with textures.
+      //TODO: Don't require 6 images for every texture.  Maybe I can get away with treating the skybox differently from
+      //      buildings which only need a texture for the top and a texture for the sides.  I might want a third texture
+      //      for facades.
+      //TODO: If I switch from materials with colors to materials with textures in builder, oneCell has to be updated too.
+      //      I could probably kludge things back together by creating a texture of a solid color so that the old YAML files
+      //      work, but oneCell will have to use textures too.
+      int width, height, channels = 3;
+      auto pixels = stbi_load(INSTALL_DIR "/include/examples/testSkyTexture.jpg", &width, &height, &channels, STBI_rgb);
+      assert(pixels != nullptr && "Failed to load image from /examples/testSkyTexture.jpg");
+
+      fTextures.reset(new gl::TextureArray<GL_RGB32F, GL_UNSIGNED_BYTE>(width, height, 6));
+      const unsigned int format = GL_RGB;
+      fTextures->insert(0, format, pixels); //+x
+      fTextures->insert(1, format, pixels); //-x
+      fTextures->insert(2, format, pixels); //+y
+      fTextures->insert(3, format, pixels); //-y
+      fTextures->insert(4, format, pixels); //+z
+      fTextures->insert(5, format, pixels); //-z
+
+      stbi_image_free(pixels);
+
       const auto& cameraMap = document["cameras"];
       for(const auto& camera: cameraMap)
       {
@@ -162,6 +188,8 @@ namespace app
     sky["center"] = cl::float3(fSkybox.center);
     sky["material"] = materialIndexToName[fSkybox.material];
 
+    //TODO: Write skybox textures
+
     auto cams = newFile["cameras"];
     for(const auto& inMemory: cameras)
     {
@@ -186,6 +214,10 @@ namespace app
     fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
     fDevSkybox = cl::Buffer(ctx, &fSkybox, &fSkybox + 1, false);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, fTextures->name);
+    fDevTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fTextures->name);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
   }
 
   //Returning std::unique_ptr<> because I couldn't get std::optional<> to do what I want.

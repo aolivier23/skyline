@@ -10,9 +10,10 @@
 #endif
 
 //Test a ray for intersecting the aabbs in the scene.  Returns index of struck material or -1 on
-//hitting the skybox by value and normal by reference.
+//hitting the skybox by value and normal and texture coordinates by reference.
 //Updates ray's position but not its direction.
-long int intersectScene(ray* thisRay, __global aabb* geometry, const unsigned long int nBoxes, float3* normal, __global aabb* skybox)
+long int intersectScene(ray* thisRay, __global aabb* geometry, const unsigned long int nBoxes, float3* normal,
+                        float3* texCoords, __global aabb* skybox)
 {
   //Find the closest aabb that this ray intersects
   float closestDist = aabb_intersect(skybox, *thisRay);
@@ -31,17 +32,18 @@ long int intersectScene(ray* thisRay, __global aabb* geometry, const unsigned lo
   //Update thisRay's position to the position where it hit the volume it intersected.
   thisRay->position = thisRay->position + thisRay->direction*closestDist;
 
-  const float3 rawNormal = aabb_normal(*closestBox, thisRay->position);
+  const float3 rawNormal = aabb_normal_tex_coords(*closestBox, thisRay->position, texCoords);
   *normal = (dot(rawNormal, thisRay->direction) < 0)?rawNormal:-rawNormal;
 
   //Make sure I don't intersect the same volume again.
   thisRay->position += *normal*0.0003f; //sqrt(FLT_EPSILON)
 
-  return closestBox->material;
+  return closestBox->material;  //TODO: Maybe just return texCoords instead?  Return closestBox->material * 6 in z.
 }
 
 //Trace the path of a single ray through nBounces in a scene of boxs
-void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t* mySeed, const float3 normal, __global material* struckMaterial)
+void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t* mySeed, const float3 normal,
+                     const float3 texCoords, __global material* struckMaterial)
 {
   //Small angle approximation speeds up processing from 47000 us to 43000 us
   const float theta = random(mySeed), phi = 2.f*M_PI*random(mySeed);
@@ -58,22 +60,28 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   //the small angle approximation.
   thisRay->direction = localXAxis*theta*native_cos(phi) + localYAxis*theta*native_sin(phi) + normal*sqrt(1.f-theta*theta);
 
+  //TODO: Sample a texture via texCoords.  struckMaterial will no longer be needed.
   //Update accumulated color of this ray
   *lightColor += *maskColor * struckMaterial->emission;
   *maskColor *= struckMaterial->color * dot(thisRay->direction, normal);
 }
 
-float3 hitSky(const ray thisRay, const float3 maskColor, __global material* skyboxMaterial)
+float3 sampleSky(const float3 texCoords, const float3 maskColor, __read_only image2d_array_t textures, sampler_t textureSampler)
 {
   //TODO: Look up struck emission color from textures.  I'll need one for each
   //      of the ceiling and the 4 walls.
-  return maskColor*(float3){0.529, 0.808, 0.922}; //Sky blue from https://www.colorhexa.com/87ceeb
+  //return maskColor * (float3){0.529, 0.808, 0.922}; //Sky blue from https://www.colorhexa.com/87ceeb
+
+  //TODO: 4th component becomes reflectivity
+
+  return maskColor * read_imagef(textures, textureSampler, (float4){texCoords, 0.}).xyz;
 }
 
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
                         const unsigned long int nBoxes, __global material* materials, __global aabb* skybox,
                         const float3 cameraPos, const float3 focalPos, const float3 up, const float3 right,
-                        const int nBounces, __global size_t* seeds, const int iterations, const int nSamplesPerFrame)
+                        const int nBounces, __global size_t* seeds, const int iterations, const int nSamplesPerFrame,
+                        __read_only image2d_array_t textures, sampler_t textureSampler)
 {
   //TODO: Copy geometry into __local memory
 
@@ -85,36 +93,36 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   ray thisRay = generateRay(pixel, cameraPos, focalPos, up, right, get_global_size(0), get_global_size(1));
 
   //Reuse first intersection before relfection for each sample of this pixel.
-  float3 normal, lightColor = {0.f, 0.f, 0.f}, maskColor = {1.f, 1.f, 1.f};
-  long int material = intersectScene(&thisRay, geometry, nBoxes, &normal, skybox);
-  bool hitSkybox = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
+  float3 normal, texCoords, lightColor = {0.f, 0.f, 0.f}, maskColor = {1.f, 1.f, 1.f};
+  long int material = intersectScene(&thisRay, geometry, nBoxes, &normal, &texCoords, skybox);
+  bool hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
 
   //For each sample of this pixel
   for(size_t sample = 0; sample < nSamplesPerFrame; ++sample)
   {
     //For each bounce of this ray around the scene
-    for(size_t bounce = 1; bounce < nBounces - 1 && !hitSkybox; ++bounce)
+    for(size_t bounce = 1; bounce < nBounces - 1 && !hitSky; ++bounce)
     {
       //TODO: Sort rays by struck material and process 1 material at a time?
       //      I might get a lot more milage out of sorting rays when I'm reading from
       //      textures.
 
       //Otherwise, scatter this ray off of whatever it hit and intersect the scene again
-      scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, materials + material);
-      material = intersectScene(&thisRay, geometry, nBoxes, &normal, skybox);
-      hitSkybox = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
+      scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material);
+      material = intersectScene(&thisRay, geometry, nBoxes, &normal, &texCoords, skybox);
+      hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
     }
 
     //Final shade for this sample
-    if(hitSkybox)
+    if(hitSky)
     {
       //TODO: Emission is hard-coded for now so that skybox material is the floor material.
       //      Next, I need to look up sky color from hitSky.
-      lightColor += hitSky(thisRay, maskColor, materials + skybox->material);
-    }
-    else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, materials + material);
+      lightColor += sampleSky(texCoords, maskColor, textures, textureSampler);
 
-    //pixelColor += (float4)(lightColor, 1.f) / (float)(iterations*nSamplesPerFrame);
+      //TODO: Intersect on the sun instead of the skybox?
+    }
+    else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material);
   }
   pixelColor += (float4)(lightColor, 1.f) / (float)(iterations*nSamplesPerFrame);
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame

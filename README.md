@@ -45,6 +45,7 @@ level.
 ##Contains:
 - GLAD
 - Dear IMGUI
+- STB components like `stb_image.h`
 
 #Working Notes:
 

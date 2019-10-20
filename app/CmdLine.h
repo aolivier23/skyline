@@ -26,11 +26,15 @@
 //camera includes
 #include "camera/CameraModel.h"
 
+//gl includes
+#include "gl/TextureArray.cpp"
+
 //yaml-cpp includes
 #include "yaml-cpp/yaml.h"
 
 namespace app
 {
+  //TODO: Rename me to something like Geometry and put command line parsing and usage information into a separate function-only header.
   class CmdLine
   {
     public:
@@ -50,6 +54,7 @@ namespace app
       inline const cl::Buffer& materials() const { return fDevMaterials; }
       inline const cl::Buffer& boxes() const { return fDevBoxes; }
       inline const cl::Buffer& skybox() const { return fDevSkybox; }
+      inline const cl::ImageGL& textures() const { return fDevTextures; }
       inline size_t nBoxes() const { return fBoxes.size(); }
 
       //Custom exception class to explain why the command line couldn't be parsed.
@@ -81,6 +86,7 @@ namespace app
       std::vector<material> fMaterials;
       std::vector<aabb> fBoxes;
       aabb fSkybox;
+      std::unique_ptr<gl::TextureArray<GL_RGB32F, GL_UNSIGNED_BYTE>> fTextures; //TODO: Some format that Dear IMGUI supports
 
       //Metadata with references to GPU-ready data
       std::map<std::string, int> nameToMaterialIndex;
@@ -94,6 +100,7 @@ namespace app
       cl::Buffer fDevMaterials;
       cl::Buffer fDevBoxes;
       cl::Buffer fDevSkybox;
+      cl::ImageGL fDevTextures; //Textures for the skybox and building faces
   };
 }
 

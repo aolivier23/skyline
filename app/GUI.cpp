@@ -295,7 +295,7 @@ namespace app
         try
         {
           newFile.load(fileName);
-          app = newFile;
+          app = std::move(newFile);
           showOpen = false;
           ImGui::End();
           return true;

@@ -60,20 +60,6 @@ namespace
 
 int main(const int argc, const char** argv)
 {
-  //Parse the command line for a configuration file.
-  //This de-serializes the geometry to render and camera configurations.
-  app::CmdLine params;
-
-  try
-  {
-    params.load(argc, argv);
-  }
-  catch(const app::CmdLine::exception& e)
-  {
-    std::cerr << e.what();
-    return CMD_LINE_ERROR;
-  }
-
   //Set up OpenGL context via GLFW
   if(!glfwInit())
   {
@@ -105,6 +91,20 @@ int main(const int argc, const char** argv)
     std::cerr << "Failed to load OpenGL functions with GLAD.  I won't be able to render anything, so"
               << " returning an error.\n";
     return SETUP_ERROR;
+  }
+
+  //Parse the command line for a configuration file.
+  //This de-serializes the geometry to render and camera configurations.
+  app::CmdLine params;
+
+  try
+  {
+    params.load(argc, argv);
+  }
+  catch(const app::CmdLine::exception& e)
+  {
+    std::cerr << e.what();
+    return CMD_LINE_ERROR;
   }
 
   //Get the first GPU device among all platforms that matches the current OpenGL context
@@ -235,7 +235,7 @@ int main(const int argc, const char** argv)
     return SETUP_ERROR;
   }
 
-  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, cl_float3, cl_float3, int, cl::Buffer, int, int>(cl::Kernel(program, "pathTrace"));
+  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, cl_float3, cl_float3, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
 
   //Set up viewport
   int width, height;
@@ -261,13 +261,11 @@ int main(const int argc, const char** argv)
 
   //Set up geometry to send to the GPU.  It was read in from the command line in a file.
   params.sendToGPU(ctx);
-  cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
+  cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST),
+              textureSampler(ctx, true, CL_ADDRESS_REPEAT, CL_FILTER_LINEAR);
 
   //Selection state
   std::unique_ptr<app::CmdLine::selected> selection;
-  /*std::optional<std::reference_wrapper<aabb>> selectedBox;
-  std::string& selectedName;
-  material& selectedMaterial;*/
 
   //Render loop that calls OpenCL kernel
   while(!glfwWindowShouldClose(window))
@@ -280,12 +278,12 @@ int main(const int argc, const char** argv)
     //Run the skyline engine
     try
     {
-      std::vector<cl::Memory> mem = {*(change.glImage)};
+      std::vector<cl::Memory> mem = {*(change.glImage), params.textures()};
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
                     *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position().data,
                     change.camera().focalPlane().data, change.camera().up().data, change.camera().right().data, change.nBounces(), change.seeds(),
-                    ++change.nIterations(), change.nSamples());
+                    ++change.nIterations(), change.nSamples(), params.textures(), textureSampler);
 
       if(!io.WantCaptureMouse)
       {

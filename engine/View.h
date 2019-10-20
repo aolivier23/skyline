@@ -34,6 +34,9 @@ class GLFWwindow;
 
 namespace eng
 {
+  //TODO: Rename me to something like Screen or Presenter.
+  //      Maybe even make this a class template whose parameter is
+  //      objects to reallocate on screen resize.
   class View
   {
     protected:

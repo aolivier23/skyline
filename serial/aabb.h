@@ -25,4 +25,7 @@ float aabb_intersect(__global const aabb* shape, const ray thisRay);
 
 //Return the normal vector at a point on shape 
 CL(float3) aabb_normal(const aabb shape, const CL(float3) pos);
+
+//Return normal by value and texture coordinates by reference
+CL(float3) aabb_normal_tex_coords(const aabb shape, const CL(float3) pos, CL(float3)* texCoords);
 #endif //AABB_H

@@ -58,3 +58,46 @@ CL(float3) aabb_normal(const aabb shape, const CL(float3) pos)
 
   return (CL(float3)){0., 0., -1.};
 }
+
+//Return the normal vector by value and texture coordinates by reference
+CL(float3) aabb_normal_tex_coords(const aabb shape, const CL(float3) pos, CL(float3)* texCoords)
+{
+  //TODO: Actually calculate safety margin
+  const CL(float3) diff = pos - shape.center;
+  //x
+  if(fabs(diff.x - shape.width.x/2.) < FLT_EPSILON*3.)
+  {
+    *texCoords = (CL(float3)){diff.y/shape.width.y + 0.5, diff.z/shape.width.z + 0.5, 0.};
+    return (CL(float3)){1., 0., 0.};
+  }
+
+  if(fabs(diff.x + shape.width.x/2.) < FLT_EPSILON*3.)
+  {
+    *texCoords = (CL(float3)){diff.y/shape.width.y + 0.5, diff.z/shape.width.z + 0.5, 1.};
+    return (CL(float3)){-1., 0., 0.};
+  }
+
+  //y
+  if(fabs(diff.y - shape.width.y/2.) < FLT_EPSILON*3.)
+  {
+    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5, diff.z/shape.width.z + 0.5, 2.};
+    return (CL(float3)){0., 1., 0.};
+  }
+
+  if(fabs(diff.y + shape.width.y/2.) < FLT_EPSILON*3.)
+  {
+    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5, diff.z/shape.width.z + 0.5, 3.};
+    return (CL(float3)){0., -1., 0.};
+  }
+
+  //TODO: These coordinates seem to turn the texture on its side!
+  //z
+  if(fabs(diff.z - shape.width.z/2.) < FLT_EPSILON*3.)
+  {
+    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5, diff.y/shape.width.y + 0.5, 4.};
+    return (CL(float3)){0., 0., 1.};
+  }
+
+  *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5, diff.y/shape.width.y + 0.5, 5.};
+  return (CL(float3)){0., 0., -1.};
+}
