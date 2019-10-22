@@ -13,19 +13,19 @@
 float aabb_intersect(__global const aabb* shape, const ray thisRay)
 {
   const CL(float3) diff = thisRay.position - shape->center;
-  const CL(float3) dirInv = (CL(float3)){1./thisRay.direction.x, 1./thisRay.direction.y, 1./thisRay.direction.z};
+  const CL(float3) dirInv = (CL(float3)){1.f/thisRay.direction.x, 1.f/thisRay.direction.y, 1.f/thisRay.direction.z};
   
   //I learned this algorithm from a combination of https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-aabb-intersection and http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
   //TODO: Could I frame this as a vector operation to allow OpenCL to do some SIMD magic?
   //X
   int sign = (dirInv.x > 0)?1:-1;
-  float tmin = (-sign*shape->width.x/2. - diff.x)*dirInv.x;
-  float tmax = (sign*shape->width.x/2. - diff.x)*dirInv.x;
+  float tmin = (-sign*shape->width.x/2.f - diff.x)*dirInv.x;
+  float tmax = (sign*shape->width.x/2.f - diff.x)*dirInv.x;
 
   //Y
   sign = (dirInv.y > 0)?1:-1;
-  float tother0 = (-sign*shape->width.y/2. - diff.y)*dirInv.y;
-  float tother1 = (sign*shape->width.y/2. - diff.y)*dirInv.y;
+  float tother0 = (-sign*shape->width.y/2.f - diff.y)*dirInv.y;
+  float tother1 = (sign*shape->width.y/2.f - diff.y)*dirInv.y;
 
   if(tmin > tother1 || tother0 > tmax) return -1;
   tmin = max(tmin, tother0);
@@ -33,8 +33,8 @@ float aabb_intersect(__global const aabb* shape, const ray thisRay)
 
   //Z
   sign = (dirInv.z > 0)?1:-1;
-  tother0 = (-sign*shape->width.z/2. - diff.z)*dirInv.z;
-  tother1 = (sign*shape->width.z/2. - diff.z)*dirInv.z;
+  tother0 = (-sign*shape->width.z/2.f - diff.z)*dirInv.z;
+  tother1 = (sign*shape->width.z/2.f - diff.z)*dirInv.z;
 
   if(tmin > tother1 || tother0 > tmax) return -1;
   tmin = max(tmin, tother0);
@@ -48,15 +48,15 @@ CL(float3) aabb_normal(const aabb shape, const CL(float3) pos)
 {
   //TODO: Actually calculate safety margin
   const CL(float3) diff = pos - shape.center;
-  if(fabs(diff.x - shape.width.x/2.) < FLT_EPSILON*3.) return (CL(float3)){1., 0., 0.};
-  if(fabs(diff.x + shape.width.x/2.) < FLT_EPSILON*3.) return (CL(float3)){-1., 0., 0.};
+  if(fabs(diff.x - shape.width.x/2.f) < FLT_EPSILON*3.f) return (CL(float3)){1.f, 0.f, 0.f};
+  if(fabs(diff.x + shape.width.x/2.f) < FLT_EPSILON*3.f) return (CL(float3)){-1.f, 0.f, 0.f};
 
-  if(fabs(diff.y - shape.width.y/2.) < FLT_EPSILON*3.) return (CL(float3)){0., 1., 0.};
-  if(fabs(diff.y + shape.width.y/2.) < FLT_EPSILON*3.) return (CL(float3)){0., -1., 0.};
+  if(fabs(diff.y - shape.width.y/2.f) < FLT_EPSILON*3.f) return (CL(float3)){0.f, 1.f, 0.f};
+  if(fabs(diff.y + shape.width.y/2.f) < FLT_EPSILON*3.f) return (CL(float3)){0.f, -1.f, 0.f};
 
-  if(fabs(diff.z - shape.width.z/2.) < FLT_EPSILON*3.) return (CL(float3)){0., 0., 1.};
+  if(fabs(diff.z - shape.width.z/2.f) < FLT_EPSILON*3.f) return (CL(float3)){0.f, 0.f, 1.f};
 
-  return (CL(float3)){0., 0., -1.};
+  return (CL(float3)){0.f, 0.f, -1.f};
 }
 
 //Return the normal vector by value and texture coordinates by reference
@@ -65,39 +65,39 @@ CL(float3) aabb_normal_tex_coords(const aabb shape, const CL(float3) pos, CL(flo
   //TODO: Actually calculate safety margin
   const CL(float3) diff = pos - shape.center;
   //x
-  if(fabs(diff.x - shape.width.x/2.) < FLT_EPSILON*3.)
+  if(fabs(diff.x - shape.width.x/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.y/shape.width.y + 0.5, diff.z/shape.width.z + 0.5, 0.};
-    return (CL(float3)){1., 0., 0.};
+    *texCoords = (CL(float3)){diff.z/shape.width.z + 0.5f, diff.y/shape.width.y + 0.5f, 0.f};
+    return (CL(float3)){1.f, 0.f, 0.f};
   }
 
-  if(fabs(diff.x + shape.width.x/2.) < FLT_EPSILON*3.)
+  if(fabs(diff.x + shape.width.x/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.y/shape.width.y + 0.5, diff.z/shape.width.z + 0.5, 1.};
-    return (CL(float3)){-1., 0., 0.};
+    *texCoords = (CL(float3)){diff.z/shape.width.z + 0.5f, diff.y/shape.width.y + 0.5f, 1.f};
+    return (CL(float3)){-1.f, 0.f, 0.f};
   }
 
   //y
-  if(fabs(diff.y - shape.width.y/2.) < FLT_EPSILON*3.)
+  if(fabs(diff.y - shape.width.y/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5, diff.z/shape.width.z + 0.5, 2.};
-    return (CL(float3)){0., 1., 0.};
+    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5f, diff.z/shape.width.z + 0.5f, 2.f};
+    return (CL(float3)){0.f, 1.f, 0.f};
   }
 
-  if(fabs(diff.y + shape.width.y/2.) < FLT_EPSILON*3.)
+  if(fabs(diff.y + shape.width.y/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5, diff.z/shape.width.z + 0.5, 3.};
-    return (CL(float3)){0., -1., 0.};
+    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5f, diff.z/shape.width.z + 0.5f, 3.f};
+    return (CL(float3)){0.f, -1.f, 0.f};
   }
 
   //TODO: These coordinates seem to turn the texture on its side!
   //z
-  if(fabs(diff.z - shape.width.z/2.) < FLT_EPSILON*3.)
+  if(fabs(diff.z - shape.width.z/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5, diff.y/shape.width.y + 0.5, 4.};
-    return (CL(float3)){0., 0., 1.};
+    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5f, diff.y/shape.width.y + 0.5f, 4.f};
+    return (CL(float3)){0.f, 0.f, 1.f};
   }
 
-  *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5, diff.y/shape.width.y + 0.5, 5.};
-  return (CL(float3)){0., 0., -1.};
+  *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5f, diff.y/shape.width.y + 0.5f, 5.f};
+  return (CL(float3)){0.f, 0.f, -1.f};
 }

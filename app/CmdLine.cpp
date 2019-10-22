@@ -132,15 +132,38 @@ namespace app
       auto pixels = stbi_load(INSTALL_DIR "/include/examples/testSkyTexture.jpg", &width, &height, &channels, STBI_rgb);
       assert(pixels != nullptr && "Failed to load image from /examples/testSkyTexture.jpg");
 
-      fTextures.reset(new gl::TextureArray<GL_RGB32F, GL_UNSIGNED_BYTE>(width, height, 6));
+      fSkyTextures.reset(new gl::TextureArray<GL_RGB32F, GL_UNSIGNED_BYTE>(width, height, 6));
       const unsigned int format = GL_RGB;
-      fTextures->insert(0, format, pixels); //+x
-      fTextures->insert(1, format, pixels); //-x
-      fTextures->insert(2, format, pixels); //+y
-      fTextures->insert(3, format, pixels); //-y
-      fTextures->insert(4, format, pixels); //+z
-      fTextures->insert(5, format, pixels); //-z
+      fSkyTextures->insert(0, format, pixels); //+x
+      fSkyTextures->insert(1, format, pixels); //-x
+      fSkyTextures->insert(2, format, pixels); //+y
+      fSkyTextures->insert(3, format, pixels); //-y
+      fSkyTextures->insert(4, format, pixels); //+z
+      fSkyTextures->insert(5, format, pixels); //-z
 
+      stbi_image_free(pixels);
+
+      //TODO: Read textures from YAML file instead of materials.  Replace materials entirely with textures.
+      //TODO: I'm only supporting 2 textures per building for now.  Eventually, I might want separate textures
+      //      for facades.
+      const unsigned int buildingFormat = GL_RGBA;
+      channels = 4;
+      pixels = stbi_load(INSTALL_DIR "/include/examples/testBuildingSides.png", &width, &height, &channels, STBI_rgb_alpha);
+      assert(pixels != nullptr && "Failed to load image from /include/examples/testBuildingSides.png");
+      fBuildingTextures.reset(new gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>(width, height, 6));
+
+      //Sides
+      fBuildingTextures->insert(0, buildingFormat, pixels);
+      fBuildingTextures->insert(1, buildingFormat, pixels);
+      fBuildingTextures->insert(4, buildingFormat, pixels);
+      fBuildingTextures->insert(5, buildingFormat, pixels);
+      stbi_image_free(pixels);
+
+      //Top/bottom
+      pixels = stbi_load(INSTALL_DIR "/include/examples/testBuildingRoof.png", &width, &height, &channels, STBI_rgb_alpha);
+      assert(pixels != nullptr && "Failed to load image from /include/examples/testBuildingRoof.png");
+      fBuildingTextures->insert(2, buildingFormat, pixels);
+      fBuildingTextures->insert(3, buildingFormat, pixels);
       stbi_image_free(pixels);
 
       const auto& cameraMap = document["cameras"];
@@ -215,8 +238,12 @@ namespace app
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
     fDevSkybox = cl::Buffer(ctx, &fSkybox, &fSkybox + 1, false);
 
-    glBindTexture(GL_TEXTURE_2D_ARRAY, fTextures->name);
-    fDevTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fTextures->name);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, fSkyTextures->name);
+    fDevSkyTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fSkyTextures->name);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, fBuildingTextures->name);
+    fDevBuildingTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fBuildingTextures->name);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
   }
 

@@ -235,7 +235,7 @@ int main(const int argc, const char** argv)
     return SETUP_ERROR;
   }
 
-  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, cl_float3, cl_float3, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
+  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, cl_float3, cl_float3, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler, cl::ImageGL>(cl::Kernel(program, "pathTrace"));
 
   //Set up viewport
   int width, height;
@@ -278,12 +278,12 @@ int main(const int argc, const char** argv)
     //Run the skyline engine
     try
     {
-      std::vector<cl::Memory> mem = {*(change.glImage), params.textures()};
+      std::vector<cl::Memory> mem = {*(change.glImage), params.skyTextures(), params.buildingTextures()};
       queue.enqueueAcquireGLObjects(&mem);
       pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
                     *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position().data,
                     change.camera().focalPlane().data, change.camera().up().data, change.camera().right().data, change.nBounces(), change.seeds(),
-                    ++change.nIterations(), change.nSamples(), params.textures(), textureSampler);
+                    ++change.nIterations(), change.nSamples(), params.skyTextures(), textureSampler, params.buildingTextures());
 
       if(!io.WantCaptureMouse)
       {
