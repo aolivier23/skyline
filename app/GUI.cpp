@@ -136,7 +136,7 @@ namespace app
       }
 
       float jitter = view.fCamController->model().jitter();
-      if(ImGui::InputFloat("Jitter", &jitter, ImGuiInputTextFlags_EnterReturnsTrue))
+      if(ImGui::InputFloat("Jitter", &jitter, 0., 0., "%.5f", ImGuiInputTextFlags_EnterReturnsTrue))
       {
         view.fCamController->model().setJitter(jitter);
         view.onCameraChange();
