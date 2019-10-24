@@ -53,23 +53,31 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   const float3 localXAxis = normalize((fabs(normal.x) > 0.1f)?(float3)(normal.z, 0.f, -normal.x)
                                                              :(float3)(0.f, -normal.z, normal.y));
   const float3 localYAxis = cross(normal, localXAxis);
- 
-  //I should have to normalize the calculation below, but I can show that it doesn't make any difference.  I'm adding 3
+
+  const float4 color = read_imagef(buildingTextures, textureSampler, (float4){texCoords, 0.}); 
+
+  //TODO: Fresnel equation: the fraction of light that is reflected or transmmitted depends on direction.
+  //Do specular reflections color.w percent of the time and diffuse otherwise.
+  //
+  //I could try to do mathematical shenanigans here, but they have to be at least quadratic because I have
+  //3 boundary conditions (0 at random = 0, 1.99 at random = 1, and 1 at random = w).  Getting the floating
+  //point precision effects correct with that quadratic makes this problem far too challenging compared to
+  //what I gain.  I can't even notice the performance difference yet.
+  const float w = color.w;
+  const bool isSpecular = random(mySeed)<w;
+
+  //I should have to normalize randomDir below, but I can show that it doesn't make any difference.  I'm adding 3
   //normal vectors and weighting them with weights that add in quadrature to 1.  The vectors I'm adding form a basis,
   //so their dot products are 0.  So, when I dot the result with itself, I just get the sum of the squares of the
   //weights which should come out to 1 if I'm actually using trig functions.  It seems to be close enough even with
   //the small angle approximation.
-  thisRay->direction = localXAxis*theta*native_cos(phi) + localYAxis*theta*native_sin(phi) + normal*sqrt(1.f-theta*theta);
+  const float3 randomDir = localXAxis*theta*native_cos(phi) + localYAxis*theta*native_sin(phi) + normal*sqrt(1.f-theta*theta),
+               reflectDir = thisRay->direction - 2.f*dot(thisRay->direction, normal)*normal;
+  thisRay->direction = (1.f - isSpecular)*randomDir + isSpecular * reflectDir; //N.B.: isSpecular is always either 0 or 1, so these
+                                                                               //      directions should never actually be mixed.
 
-  //TODO: struckMaterial is no longer be needed.
-  //Update accumulated color of this ray
   *lightColor += *maskColor * struckMaterial->emission;
-  //*maskColor *= struckMaterial->color * dot(thisRay->direction, normal);
-  *maskColor *= read_imagef(buildingTextures, textureSampler, (float4){texCoords, 0.}).xyz * dot(thisRay->direction, normal);
-
-  //TODO: Reflection!  I need to think more about this code before I use it.
-  //const float4 color = read_imagef(buildingTextures, textureSampler, (float4){texCoords, 0.})
-  //*maskColor *= color.w * color.xyz * dot(thisRay->direction, normal);
+  *maskColor *= color.xyz * dot(thisRay->direction, normal);
 }
 
 float3 sampleSky(const float3 texCoords, const float3 maskColor, __read_only image2d_array_t skyTextures, sampler_t textureSampler)
@@ -130,7 +138,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     }
     else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material, buildingTextures, textureSampler);
   }
-  pixelColor += (float4)(lightColor, 1.f) / (float)(iterations*nSamplesPerFrame);
+  pixelColor += (float4){lightColor, 1.f} / (float)(iterations*nSamplesPerFrame);
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame
 
   write_imagef(pixels, pixel, pixelColor);
