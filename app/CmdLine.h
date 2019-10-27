@@ -20,8 +20,8 @@
 #define NOT_ON_DEVICE
 #include "serial/vector.h"
 #include "serial/ray.h"
-#include "serial/aabb.h"
 #include "serial/material.h"
+#include "serial/aabb.h"
 
 //camera includes
 #include "camera/CameraModel.h"
@@ -54,8 +54,7 @@ namespace app
       inline const cl::Buffer& materials() const { return fDevMaterials; }
       inline const cl::Buffer& boxes() const { return fDevBoxes; }
       inline const cl::Buffer& skybox() const { return fDevSkybox; }
-      inline const cl::ImageGL& skyTextures() const { return fDevSkyTextures; }
-      inline const cl::ImageGL& buildingTextures() const { return fDevBuildingTextures; }
+      inline const cl::ImageGL& textures() const { return fDevTextures; }
       inline size_t nBoxes() const { return fBoxes.size(); }
 
       //Custom exception class to explain why the command line couldn't be parsed.
@@ -87,8 +86,7 @@ namespace app
       std::vector<material> fMaterials;
       std::vector<aabb> fBoxes;
       aabb fSkybox;
-      std::unique_ptr<gl::TextureArray<GL_RGB32F, GL_UNSIGNED_BYTE>> fSkyTextures; //TODO: Some format that Dear IMGUI supports
-      std::unique_ptr<gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>> fBuildingTextures;
+      std::unique_ptr<gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>> fTextures;
 
       //Metadata with references to GPU-ready data
       std::map<std::string, int> nameToMaterialIndex;
@@ -102,8 +100,7 @@ namespace app
       cl::Buffer fDevMaterials;
       cl::Buffer fDevBoxes;
       cl::Buffer fDevSkybox;
-      cl::ImageGL fDevSkyTextures; //Textures for the skybox
-      cl::ImageGL fDevBuildingTextures; //Textures for building faces
+      cl::ImageGL fDevTextures;
   };
 }
 

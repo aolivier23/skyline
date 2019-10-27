@@ -60,44 +60,43 @@ CL(float3) aabb_normal(const aabb shape, const CL(float3) pos)
 }
 
 //Return the normal vector by value and texture coordinates by reference
-CL(float3) aabb_normal_tex_coords(const aabb shape, const CL(float3) pos, CL(float3)* texCoords)
+CL(float3) aabb_normal_tex_coords(const aabb shape, const CL(float3) pos, const material mat, CL(float3)* texCoords)
 {
   //TODO: Actually calculate safety margin
   const CL(float3) diff = pos - shape.center;
   //x
-  if(fabs(diff.x - shape.width.x/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.x - mat.norm.x/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.z/shape.width.z + 0.5f, diff.y/shape.width.y + 0.5f, 0.f};
+    *texCoords = (CL(float3)){diff.z/mat.norm.z + 0.5f, diff.y/mat.norm.y + 0.5f, (float)((unsigned char*)&mat.textures)[0]};
     return (CL(float3)){1.f, 0.f, 0.f};
   }
 
-  if(fabs(diff.x + shape.width.x/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.x + mat.norm.x/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.z/shape.width.z + 0.5f, diff.y/shape.width.y + 0.5f, 1.f};
+    *texCoords = (CL(float3)){diff.z/mat.norm.z + 0.5f, diff.y/mat.norm.y + 0.5f, (float)((unsigned char*)&mat.textures)[1]};
     return (CL(float3)){-1.f, 0.f, 0.f};
   }
 
   //y
-  if(fabs(diff.y - shape.width.y/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.y - mat.norm.y/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5f, diff.z/shape.width.z + 0.5f, 2.f};
+    *texCoords = (CL(float3)){diff.x/mat.norm.x + 0.5f, diff.z/mat.norm.z + 0.5f, (float)((unsigned char*)&mat.textures)[2]};
     return (CL(float3)){0.f, 1.f, 0.f};
   }
 
-  if(fabs(diff.y + shape.width.y/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.y + mat.norm.y/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5f, diff.z/shape.width.z + 0.5f, 3.f};
+    *texCoords = (CL(float3)){diff.x/mat.norm.x + 0.5f, diff.z/mat.norm.z + 0.5f, (float)((unsigned char*)&mat.textures)[3]};
     return (CL(float3)){0.f, -1.f, 0.f};
   }
 
-  //TODO: These coordinates seem to turn the texture on its side!
   //z
-  if(fabs(diff.z - shape.width.z/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.z - mat.norm.z/2.f) < FLT_EPSILON*3.f)
   {
-    *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5f, diff.y/shape.width.y + 0.5f, 4.f};
+    *texCoords = (CL(float3)){diff.x/mat.norm.x + 0.5f, diff.y/mat.norm.y + 0.5f, (float)((unsigned char*)&mat.textures)[4]};
     return (CL(float3)){0.f, 0.f, 1.f};
   }
 
-  *texCoords = (CL(float3)){diff.x/shape.width.x + 0.5f, diff.y/shape.width.y + 0.5f, 5.f};
+  *texCoords = (CL(float3)){diff.x/mat.norm.x + 0.5f, diff.y/mat.norm.y + 0.5f, (float)((unsigned char*)&mat.textures)[5]};
   return (CL(float3)){0.f, 0.f, -1.f};
 }

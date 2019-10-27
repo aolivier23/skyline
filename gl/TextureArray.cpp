@@ -55,6 +55,7 @@ namespace gl
         assert(pos < fSize && "Texture arrays have a fixed size!");
         assert(xOffset < fWidth && "X offset into a texture must be < its width!");
         assert(yOffset < fHeight && "Y offset into a texture must be < its height!");
+        assert(data != nullptr && "Passed nullptr for pixels to insert()!");
   
         glBindTexture(TARGET, name);
         CHECK_GL_ERROR(glTexSubImage3D, TARGET, 0, xOffset, yOffset, pos, fWidth, fHeight, 1, format, COMPONENT, data);

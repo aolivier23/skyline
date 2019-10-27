@@ -27,5 +27,5 @@ float aabb_intersect(__global const aabb* shape, const ray thisRay);
 CL(float3) aabb_normal(const aabb shape, const CL(float3) pos);
 
 //Return normal by value and texture coordinates by reference
-CL(float3) aabb_normal_tex_coords(const aabb shape, const CL(float3) pos, CL(float3)* texCoords);
+CL(float3) aabb_normal_tex_coords(const aabb shape, const CL(float3) pos, const material mat, CL(float3)* texCoords);
 #endif //AABB_H

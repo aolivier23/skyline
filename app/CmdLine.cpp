@@ -10,6 +10,7 @@
 //c++ includes
 #include <exception>
 #include <fstream>
+#include <iostream>
 
 //OpenCL includes
 #define __CL_ENABLE_EXCEPTIONS //OpenCL c++ API now throws exceptions
@@ -57,8 +58,25 @@
               "\t2: Could not begin rendering.\n"\
               "\t3: An error occurred during rendering.\n"
 
+//Helper functions to make code more readable
+namespace
+{
+  unsigned char findOrCreate(const std::string& toFind, std::vector<std::string>& existingNames)
+  {
+    auto found = std::find(existingNames.begin(), existingNames.end(), toFind);
+    if(found == existingNames.end())
+    {
+      existingNames.push_back(toFind);
+      found = std::prev(existingNames.end());
+    }
+
+    return std::distance(existingNames.begin(), found);
+  }
+}
+
 namespace app
 {
+  //TODO: Move this overload of load() and USAGE to individual applications when CmdLine -> Geometry.
   YAML::Node CmdLine::load(const int argc, const char** argv)
   {
     //argv[0] is always the path to this application.  So, the number of command line arguments is really argc - 1, and
@@ -90,15 +108,31 @@ namespace app
         document = YAML::LoadFile(std::string(INSTALL_DIR) + "/include/examples/" + fileName);
       }
 
+      //A temporary place to map texture names to indices
+      //TODO: Make this cache permanent once I've decided on the format the GUI needs
+      std::vector<std::string> texturesToCreate;
+
       //Map the YAML configuration file to a geometry to render using a few keywords
       const auto& matMap = document["materials"];
 
+      //TODO: Look for a material called "default" for builder?
       for(const auto& mat: matMap)
       {
         nameToMaterialIndex[mat.first.as<std::string>()] = fMaterials.size();
         //Default color is color of my first 3D rendered triangle from learnopengl.com
-        fMaterials.push_back(material{mat.second["color"].as<cl::float3>(cl::float3{1., 0.64453125, 0.}).data,
-                                     mat.second["emission"].as<cl::float3>(cl::float3()).data});
+        //TODO: As an alternative, read color and generate a texture of pure color.
+        fMaterials.push_back(material{mat.second["emission"].as<cl::float3>(cl::float3()).data,
+                             {
+                               ::findOrCreate(mat.second["left"].as<std::string>(), texturesToCreate),
+                               ::findOrCreate(mat.second["right"].as<std::string>(), texturesToCreate),
+                               ::findOrCreate(mat.second["top"].as<std::string>(), texturesToCreate),
+                               ::findOrCreate(mat.second["bottom"].as<std::string>(), texturesToCreate),
+                               ::findOrCreate(mat.second["front"].as<std::string>(), texturesToCreate),
+                               ::findOrCreate(mat.second["back"].as<std::string>(), texturesToCreate),
+                               0,
+                               0
+                             },
+                             mat.second["norm"].as<cl::float3>(cl::float3())});
       }
 
       //TODO: This would be a great time to fill out metadata like box names for some GUI.
@@ -121,50 +155,49 @@ namespace app
       fFloorY = fSkybox.center.y - fSkybox.width.y/2.;
 
       //Load textures
-      //TODO: Read textures from YAML file instead of materials.  Replace materials entirely with textures.
-      //TODO: Don't require 6 images for every texture.  Maybe I can get away with treating the skybox differently from
-      //      buildings which only need a texture for the top and a texture for the sides.  I might want a third texture
-      //      for facades.
-      //TODO: If I switch from materials with colors to materials with textures in builder, oneCell has to be updated too.
-      //      I could probably kludge things back together by creating a texture of a solid color so that the old YAML files
-      //      work, but oneCell will have to use textures too.
-      int width, height, channels = 3;
-      auto pixels = stbi_load(INSTALL_DIR "/include/examples/testSkyTexture.jpg", &width, &height, &channels, STBI_rgb);
-      assert(pixels != nullptr && "Failed to load image from /examples/testSkyTexture.jpg");
-
-      fSkyTextures.reset(new gl::TextureArray<GL_RGB32F, GL_UNSIGNED_BYTE>(width, height, 6));
-      const unsigned int format = GL_RGB;
-      fSkyTextures->insert(0, format, pixels); //+x
-      fSkyTextures->insert(1, format, pixels); //-x
-      fSkyTextures->insert(2, format, pixels); //+y
-      fSkyTextures->insert(3, format, pixels); //-y
-      fSkyTextures->insert(4, format, pixels); //+z
-      fSkyTextures->insert(5, format, pixels); //-z
-
-      stbi_image_free(pixels);
-
-      //TODO: Read textures from YAML file instead of materials.  Replace materials entirely with textures.
-      //TODO: I'm only supporting 2 textures per building for now.  Eventually, I might want separate textures
-      //      for facades.
+      //TODO: oneCell has to be updated to use a kernel compatible with textures. 
+      //TODO: Update example sky texture
       const unsigned int buildingFormat = GL_RGBA;
-      channels = 4;
-      pixels = stbi_load(INSTALL_DIR "/include/examples/testBuildingSides.png", &width, &height, &channels, STBI_rgb_alpha);
-      assert(pixels != nullptr && "Failed to load image from /include/examples/testBuildingSides.png");
-      fBuildingTextures.reset(new gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>(width, height, 6));
+      int channels = 4;
+      int width, height;
 
-      //Sides
-      fBuildingTextures->insert(0, buildingFormat, pixels);
-      fBuildingTextures->insert(1, buildingFormat, pixels);
-      fBuildingTextures->insert(4, buildingFormat, pixels);
-      fBuildingTextures->insert(5, buildingFormat, pixels);
+      //I have to load a texture to get its size before allocating memory on the GPU.
+      //Or, I could get a constant size for textures somewhere else.
+      auto pixels = stbi_load(texturesToCreate[0].c_str(), &width, &height, &channels, STBI_rgb_alpha);
+      if(!pixels)
+      {
+        std::cerr << "Couldn't find " << texturesToCreate[0] << ", so trying to load "
+                  << std::string(INSTALL_DIR) + "/include/examples/" + texturesToCreate[0] << " instead...\n";
+        pixels = stbi_load((std::string(INSTALL_DIR) + "/include/examples/" + texturesToCreate[0]).c_str(), &width, &height, &channels, STBI_rgb_alpha);
+      }
+      if(!pixels) throw exception("Failed to load a texture from " + texturesToCreate[0]);
+
+      fTextures.reset(new gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>(width, height, texturesToCreate.size()));
+      fTextures->insert(0, buildingFormat, pixels);
       stbi_image_free(pixels);
 
-      //Top/bottom
-      pixels = stbi_load(INSTALL_DIR "/include/examples/testBuildingRoof.png", &width, &height, &channels, STBI_rgb_alpha);
-      assert(pixels != nullptr && "Failed to load image from /include/examples/testBuildingRoof.png");
-      fBuildingTextures->insert(2, buildingFormat, pixels);
-      fBuildingTextures->insert(3, buildingFormat, pixels);
-      stbi_image_free(pixels);
+      for(size_t whichFile = 0; whichFile < texturesToCreate.size(); ++whichFile)
+      {
+        pixels = stbi_load(texturesToCreate[whichFile].c_str(), &width, &height, &channels, STBI_rgb_alpha);
+
+        //If we failed to load pixels, try to load from the examples that ship with skyline.
+        //TODO: Look for texture search directories in the YAML file.
+        if(!pixels)
+        {
+          std::cerr << "Couldn't find " << texturesToCreate[whichFile] << ", so trying to load "
+                    << std::string(INSTALL_DIR) + "/include/examples/" + texturesToCreate[whichFile] << " instead...\n";
+          pixels = stbi_load((std::string(INSTALL_DIR) + "/include/examples/" + texturesToCreate[whichFile]).c_str(), &width, &height, &channels, STBI_rgb_alpha);
+        }
+        if(!pixels) throw exception("Failed to load a texture from " + texturesToCreate[whichFile]);
+        if(!fTextures->checkDimensions(width, height))
+        {
+          throw exception(texturesToCreate[whichFile] + " has different dimensions from the first texture in this file.  "
+                          "All textures must have the same dimensions.");
+        }
+
+        fTextures->insert(whichFile, buildingFormat, pixels);
+        stbi_image_free(pixels);
+      }
 
       const auto& cameraMap = document["cameras"];
       for(const auto& camera: cameraMap)
@@ -189,11 +222,12 @@ namespace app
     //Serialize the application state.
     YAML::Node newFile;
 
+    //TODO: Update write() to serialize texture names
     auto mats = newFile["materials"];
     for(const auto& inMemory: nameToMaterialIndex)
     {
       auto inFile = mats[inMemory.first];
-      inFile["color"] = cl::float3(fMaterials[inMemory.second].color);
+      //inFile["color"] = cl::float3(fMaterials[inMemory.second].color);
       inFile["emission"] = cl::float3(fMaterials[inMemory.second].emission);
     }
 
@@ -210,8 +244,6 @@ namespace app
     sky["width"] = cl::float3(fSkybox.width);
     sky["center"] = cl::float3(fSkybox.center);
     sky["material"] = materialIndexToName[fSkybox.material];
-
-    //TODO: Write skybox textures
 
     auto cams = newFile["cameras"];
     for(const auto& inMemory: cameras)
@@ -238,12 +270,8 @@ namespace app
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
     fDevSkybox = cl::Buffer(ctx, &fSkybox, &fSkybox + 1, false);
 
-    glBindTexture(GL_TEXTURE_2D_ARRAY, fSkyTextures->name);
-    fDevSkyTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fSkyTextures->name);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-
-    glBindTexture(GL_TEXTURE_2D_ARRAY, fBuildingTextures->name);
-    fDevBuildingTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fBuildingTextures->name);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, fTextures->name);
+    fDevTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fTextures->name);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
   }
 

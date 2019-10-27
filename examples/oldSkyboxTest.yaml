@@ -3,28 +3,14 @@
 #Boxes in the world volume and the skybox itself reference
 #the materials map by name rather than by YAML anchor to
 #better reflect the memory hierarchy needed for the GPU.
-skyboxSize: &skyboxSize [100., 2., 100.]
-
 materials:
-  boxMaterial:
-    left: "testBuildingSides.png"
-    right: "testBuildingSides.png"
-    top: "testBuildingRoof.png"
-    bottom: "testBuildingRoof.png"
-    front: "testBuildingSides.png"
-    back: "testBuildingSides.png"
+  floorMaterial:
+    color: [1., 0.64453125, 0.]
     emission: [0., 0., 0.]
-    norm: [0.3, 0.6, 0.2]
   
-  skyMaterial:
-    left: "testSkyBlue.png"
-    right: "testSkyBlue.png"
-    top: "testSkyTexture.png"
-    bottom: "testGround.png"
-    front: "testSkyBlue.png"
-    back: "testSkyBlue.png"
+  boxMaterial:
+    color: [0.56640625, 0.56640625, 0.46875000]
     emission: [0., 0., 0.]
-    norm: *skyboxSize
   
 geometry:
   #TODO: Allow more BVH information here?  oneCell will just ignore it
@@ -41,11 +27,12 @@ geometry:
     material: "boxMaterial"
 
 skybox:
-  width: *skyboxSize
+  width: [2., 2., 2.]
   center: [0., 0., 0.]
-  material: "skyMaterial"
+  material: "floorMaterial" #floorMaterial is only used for the floor.
+                            #A different emission is used for the sky.
 
 cameras:
   default:
-    position: [0., 0, 0.9]
+    position: [0., 0.2, 0.9]
     focal: [0., 0.2, 0.0]

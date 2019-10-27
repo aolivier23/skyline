@@ -448,6 +448,12 @@ namespace cl
   CL_WRAPPER(int, 3)
   CL_WRAPPER(int, 2)
 
+  using uchar = unsigned char;
+  CL_WRAPPER(uchar, 8)
+  CL_WRAPPER(uchar, 4)
+  CL_WRAPPER(uchar, 3)
+  CL_WRAPPER(uchar, 2)
+
   CL_WRAPPER(double, 4)
   CL_WRAPPER(double, 3)
   CL_WRAPPER(double, 2)

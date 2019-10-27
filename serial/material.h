@@ -7,13 +7,13 @@
 
 typedef struct material_tag
 {
-  CL(float3) color; //The color of this object
+  //TODO: Transition to textures for emission too.
   CL(float3) emission; //The color of light emitted by this object, if any
 
-  //Attributes that will require extra rays
-  //TODO: index of refraction
-  //TODO: opacity
-  //TODO: shininess
+  //Indexes into the array of textures.  Order is front, back, left, right, top, bottom (with 2
+  //dummy values for alignment) when the z axis is pointing from back to front and the y axis is
+  //up.
+  CL(uchar8) textures;
+  CL(float3) norm; //Normalize positions by this vector when calculating texture coordinates.
 } material;
-
 #endif //MATERIAL_H

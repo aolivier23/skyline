@@ -12,7 +12,7 @@
 //Test a ray for intersecting the aabbs in the scene.  Returns index of struck material or -1 on
 //hitting the skybox by value and normal and texture coordinates by reference.
 //Updates ray's position but not its direction.
-long int intersectScene(ray* thisRay, __global aabb* geometry, const unsigned long int nBoxes, float3* normal,
+long int intersectScene(ray* thisRay, __global aabb* geometry, __global material* materials, const unsigned long int nBoxes, float3* normal,
                         float3* texCoords, __global aabb* skybox)
 {
   //Find the closest aabb that this ray intersects
@@ -32,7 +32,7 @@ long int intersectScene(ray* thisRay, __global aabb* geometry, const unsigned lo
   //Update thisRay's position to the position where it hit the volume it intersected.
   thisRay->position = thisRay->position + thisRay->direction*closestDist;
 
-  const float3 rawNormal = aabb_normal_tex_coords(*closestBox, thisRay->position, texCoords);
+  const float3 rawNormal = aabb_normal_tex_coords(*closestBox, thisRay->position, materials[closestBox->material], texCoords);
   *normal = (dot(rawNormal, thisRay->direction) < 0)?rawNormal:-rawNormal;
 
   //Make sure I don't intersect the same volume again.
@@ -43,7 +43,7 @@ long int intersectScene(ray* thisRay, __global aabb* geometry, const unsigned lo
 
 //Trace the path of a single ray through nBounces in a scene of boxs
 void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t* mySeed, const float3 normal,
-                     const float3 texCoords, __global material* struckMaterial, image2d_array_t buildingTextures,
+                     const float3 texCoords, __global material* struckMaterial, image2d_array_t textures,
                      sampler_t textureSampler)
 {
   //Small angle approximation speeds up processing from 47000 us to 43000 us
@@ -54,7 +54,7 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
                                                              :(float3)(0.f, -normal.z, normal.y));
   const float3 localYAxis = cross(normal, localXAxis);
 
-  const float4 color = read_imagef(buildingTextures, textureSampler, (float4){texCoords, 0.}); 
+  const float4 color = read_imagef(textures, textureSampler, (float4){texCoords, 0.}); 
 
   //TODO: Fresnel equation: the fraction of light that is reflected or transmmitted depends on direction.
   //Do specular reflections color.w percent of the time and diffuse otherwise.
@@ -80,7 +80,7 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   *maskColor *= color.xyz * dot(thisRay->direction, normal);
 }
 
-float3 sampleSky(const float3 texCoords, const float3 maskColor, __read_only image2d_array_t skyTextures, sampler_t textureSampler)
+float3 sampleSky(const float3 texCoords, const float3 maskColor, __read_only image2d_array_t textures, sampler_t textureSampler)
 {
   //TODO: Look up struck emission color from textures.  I'll need one for each
   //      of the ceiling and the 4 walls.
@@ -88,14 +88,14 @@ float3 sampleSky(const float3 texCoords, const float3 maskColor, __read_only ima
 
   //TODO: 4th component becomes reflectivity
 
-  return maskColor * read_imagef(skyTextures, textureSampler, (float4){texCoords, 0.}).xyz;
+  return maskColor * read_imagef(textures, textureSampler, (float4){texCoords, 0.}).xyz;
 }
 
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
                         const unsigned long int nBoxes, __global material* materials, __global aabb* skybox,
                         const float3 cameraPos, const float3 focalPos, const float3 up, const float3 right,
                         const int nBounces, __global size_t* seeds, const int iterations, const int nSamplesPerFrame,
-                        __read_only image2d_array_t skyTextures, sampler_t textureSampler, __read_only image2d_array_t buildingTextures)
+                        __read_only image2d_array_t textures, sampler_t textureSampler)
 {
   //TODO: Copy geometry into __local memory
 
@@ -108,7 +108,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
 
   //Reuse first intersection before relfection for each sample of this pixel.
   float3 normal, texCoords, lightColor = {0.f, 0.f, 0.f}, maskColor = {1.f, 1.f, 1.f};
-  long int material = intersectScene(&thisRay, geometry, nBoxes, &normal, &texCoords, skybox);
+  long int material = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, &texCoords, skybox);
   bool hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
 
   //For each sample of this pixel
@@ -122,8 +122,8 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
       //      textures.  My performance is already getting killed by the skybox texture.
 
       //Otherwise, scatter this ray off of whatever it hit and intersect the scene again
-      scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material, buildingTextures, textureSampler);
-      material = intersectScene(&thisRay, geometry, nBoxes, &normal, &texCoords, skybox);
+      scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material, textures, textureSampler);
+      material = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, &texCoords, skybox);
       hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
     }
 
@@ -132,11 +132,11 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     {
       //TODO: Emission is hard-coded for now so that skybox material is the floor material.
       //      Next, I need to look up sky color from hitSky.
-      lightColor += sampleSky(texCoords, maskColor, skyTextures, textureSampler);
+      lightColor += sampleSky(texCoords, maskColor, textures, textureSampler);
 
       //TODO: Intersect on the sun instead of the skybox?
     }
-    else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material, buildingTextures, textureSampler);
+    else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material, textures, textureSampler);
   }
   pixelColor += (float4){lightColor, 1.f} / (float)(iterations*nSamplesPerFrame);
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame
