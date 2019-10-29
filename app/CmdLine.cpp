@@ -132,7 +132,7 @@ namespace app
                                0,
                                0
                              },
-                             mat.second["norm"].as<cl::float3>(cl::float3())});
+                             mat.second["norm"].as<cl::float3>(cl::float3{1.f, 1.f, 1.f})});
       }
 
       //TODO: This would be a great time to fill out metadata like box names for some GUI.
@@ -176,7 +176,7 @@ namespace app
       fTextures->insert(0, buildingFormat, pixels);
       stbi_image_free(pixels);
 
-      for(size_t whichFile = 0; whichFile < texturesToCreate.size(); ++whichFile)
+      for(size_t whichFile = 1; whichFile < texturesToCreate.size(); ++whichFile)
       {
         pixels = stbi_load(texturesToCreate[whichFile].c_str(), &width, &height, &channels, STBI_rgb_alpha);
 

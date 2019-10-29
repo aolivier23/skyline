@@ -63,8 +63,7 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   //3 boundary conditions (0 at random = 0, 1.99 at random = 1, and 1 at random = w).  Getting the floating
   //point precision effects correct with that quadratic makes this problem far too challenging compared to
   //what I gain.  I can't even notice the performance difference yet.
-  const float w = color.w;
-  const bool isSpecular = random(mySeed)<w;
+  const bool isSpecular = random(mySeed) < color.w;
 
   //I should have to normalize randomDir below, but I can show that it doesn't make any difference.  I'm adding 3
   //normal vectors and weighting them with weights that add in quadrature to 1.  The vectors I'm adding form a basis,

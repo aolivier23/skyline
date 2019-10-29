@@ -65,33 +65,33 @@ CL(float3) aabb_normal_tex_coords(const aabb shape, const CL(float3) pos, const 
   //TODO: Actually calculate safety margin
   const CL(float3) diff = pos - shape.center;
   //x
-  if(fabs(diff.x - mat.norm.x/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.x - shape.width.x/2.f) < FLT_EPSILON*3.f)
   {
     *texCoords = (CL(float3)){diff.z/mat.norm.z + 0.5f, diff.y/mat.norm.y + 0.5f, (float)((unsigned char*)&mat.textures)[0]};
     return (CL(float3)){1.f, 0.f, 0.f};
   }
 
-  if(fabs(diff.x + mat.norm.x/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.x + shape.width.x/2.f) < FLT_EPSILON*3.f)
   {
     *texCoords = (CL(float3)){diff.z/mat.norm.z + 0.5f, diff.y/mat.norm.y + 0.5f, (float)((unsigned char*)&mat.textures)[1]};
     return (CL(float3)){-1.f, 0.f, 0.f};
   }
 
   //y
-  if(fabs(diff.y - mat.norm.y/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.y - shape.width.y/2.f) < FLT_EPSILON*3.f)
   {
     *texCoords = (CL(float3)){diff.x/mat.norm.x + 0.5f, diff.z/mat.norm.z + 0.5f, (float)((unsigned char*)&mat.textures)[2]};
     return (CL(float3)){0.f, 1.f, 0.f};
   }
 
-  if(fabs(diff.y + mat.norm.y/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.y + shape.width.y/2.f) < FLT_EPSILON*3.f)
   {
     *texCoords = (CL(float3)){diff.x/mat.norm.x + 0.5f, diff.z/mat.norm.z + 0.5f, (float)((unsigned char*)&mat.textures)[3]};
     return (CL(float3)){0.f, -1.f, 0.f};
   }
 
   //z
-  if(fabs(diff.z - mat.norm.z/2.f) < FLT_EPSILON*3.f)
+  if(fabs(diff.z - shape.width.z/2.f) < FLT_EPSILON*3.f)
   {
     *texCoords = (CL(float3)){diff.x/mat.norm.x + 0.5f, diff.y/mat.norm.y + 0.5f, (float)((unsigned char*)&mat.textures)[4]};
     return (CL(float3)){0.f, 0.f, 1.f};
