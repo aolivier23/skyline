@@ -15,6 +15,16 @@ materials:
     back: "testBuildingSides.png"
     emission: [0., 0., 0.]
     norm: [0.3, 0.6, 0.2]
+
+  marble:
+    left: "MarbleBuilding.png"
+    right: "MarbleBuilding.png"
+    top: "testBuildingRoof.png"
+    bottom: "testBuildingRoof.png"
+    front: "MarbleBuilding.png"
+    back: "MarbleBuilding.png"
+    emission: [0., 0., 0.]
+    norm: [0.1, 0.1, 0.1]
   
   skyMaterial:
     left: "testSkyBlue.png"
@@ -38,7 +48,7 @@ geometry:
   anotherBox:
     width: [0.3, 0.6, 0.2]
     center: [0.6, -0.4, -0.1]
-    material: "boxMaterial"
+    material: "marble"
 
 skybox:
   width: *skyboxSize

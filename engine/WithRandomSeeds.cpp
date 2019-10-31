@@ -10,7 +10,7 @@
 namespace eng
 {
   WithRandomSeeds::WithRandomSeeds(GLFWwindow* window, cl::Context& ctx,
-                                   std::unique_ptr<eng::CameraController>&& camera): WithCamera(window, ctx, std::move(camera)), fLatency(10), fNIterations(0), fNBounces(4), fNSamples(1)
+                                   std::unique_ptr<eng::CameraController>&& camera): WithCamera(window, ctx, std::move(camera)), fLatency(0), fNIterations(0), fNBounces(4), fNSamples(1)
   {
     std::vector<size_t> hostSeeds(fWidth*fHeight);
     for(size_t id = 1; id <= fWidth*fHeight; ++id) hostSeeds[id] = id;

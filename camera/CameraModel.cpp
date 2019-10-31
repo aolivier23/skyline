@@ -14,7 +14,7 @@ namespace eng
   CameraModel::CameraModel(const cl::float3& pos, const cl::float3& focal): fPosition(pos),
                                                                             fFocalPlane(focal),
                                                                             fLCGen(std::chrono::system_clock::now().time_since_epoch().count()),
-                                                                            fDist(0., 0.01),
+                                                                            fDist(0., 0.0),
                                                                             fPitch(asin((fFocalPlane - fPosition).data.y)),
                                                                             fYaw(atan2((fFocalPlane - fPosition).data.z, (fFocalPlane - fPosition).data.x))
                      
