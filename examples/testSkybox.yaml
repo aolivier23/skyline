@@ -14,7 +14,6 @@ materials:
     front: "testBuildingSides.png"
     back: "testBuildingSides.png"
     emission: [0., 0., 0.]
-    norm: [0.3, 0.6, 0.2]
 
   marble:
     left: "MarbleBuilding.png"
@@ -24,7 +23,6 @@ materials:
     front: "MarbleBuilding.png"
     back: "MarbleBuilding.png"
     emission: [0., 0., 0.]
-    norm: [0.1, 0.1, 0.1]
   
   skyMaterial:
     left: "testSkyBlue.png"
@@ -34,7 +32,6 @@ materials:
     front: "testSkyBlue.png"
     back: "testSkyBlue.png"
     emission: [0., 0., 0.]
-    norm: *skyboxSize
   
 geometry:
   #TODO: Allow more BVH information here?  oneCell will just ignore it
@@ -44,16 +41,19 @@ geometry:
     width: [0.1, 0.2, 0.3]
     center: [-0.5, -0.8, -0.3]
     material: "boxMaterial"
+    texNorm: [0.1, 0.2, 0.3]
 
   anotherBox:
     width: [0.3, 0.6, 0.2]
     center: [0.6, -0.4, -0.1]
     material: "marble"
+    texNorm: [0.1, 0.1, 0.1]
 
 skybox:
   width: *skyboxSize
   center: [0., 0., 0.]
   material: "skyMaterial"
+  texNorm: *skyboxSize
 
 cameras:
   default:

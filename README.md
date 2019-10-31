@@ -220,9 +220,6 @@ level.
 
 - I can display textures on boxes and the skybox now!
 - TODO: Get oneCell working with textures.
-- TODO: I sometimes get a circular pattern of black spots on textures from about 2-3 units
-        away.  I think a similar visual artifact was caused by a bad choice for epsilon in
-        gdmlRaytrace.
 - Dear ImGUI has features to integrate textures into GUIs, but it doesn't have an obvious
   way to select an image.  I have to change whatever part of the OpenGL3 example consumes
   ImTextureID and basically write my own vertex and fragment shaders to display textures
@@ -232,3 +229,25 @@ level.
 - I plan to change all objects that use a given material at once.  In the box editor, I'll
   have a "Clone Material" button to change a box's material.  I guess this would be a good
   place to select a material as well.
+
+##TODO
+
+- High Dynamic Range (HDR) colors.  Do they contribute anything, or should I be able to simulate this with some setting related to frame accumulation?
+  learnopengl is a good starting point and makes a first order attempt seem pretty simple.  Basically, I want to increase the normalization of the
+  color of the sun in my example sky texture.
+- I sometimes get a circular pattern of black spots on textures from about 2-3 units
+  away.  I think a similar visual artifact was caused by a bad choice for epsilon in
+  gdmlRaytrace.
+- Edit/load materials.  Maybe separate options to edit a material itself and
+  clone a given box's material.  This probably means asynchronous texture
+  loading.  That might work well with the "transaction" model I speculated
+  about for geometry.  A transaction's destructor basically calls sendToGPU().
+- Texture mapping options.  Store for each box instead of each material.
+  Right now, I can set "norm" to a box's width to stretch a texture over
+  a box or set it to {1.f, 1.f, 1.f} to display a texture as-is.  I
+  eventually need some coarser-grained GUI options to "calibrate" this
+  option.  I chose this format to avoid branching while supporting multiple
+  different texture mapping schemes.  Right now, it looks like texture edges
+  aren't getting mapped correctly to the edges of buildings.
+- Emission from texture for window lights in night scenes.  I've left emission as a member variable of material for now.
+- Support higher resolution sky texture in the example and figure out what happened to the sun.

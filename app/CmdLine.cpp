@@ -131,8 +131,7 @@ namespace app
                                ::findOrCreate(mat.second["back"].as<std::string>(), texturesToCreate),
                                0,
                                0
-                             },
-                             mat.second["norm"].as<cl::float3>(cl::float3{1.f, 1.f, 1.f})});
+                             }});
       }
 
       //TODO: This would be a great time to fill out metadata like box names for some GUI.
@@ -143,14 +142,20 @@ namespace app
         const auto material = nameToMaterialIndex.find(box.second["material"].as<std::string>());
         if(material == nameToMaterialIndex.end()) throw exception("Failed to look up a material named " + box.second["material"].as<std::string>()
                                                              + " for a box named " + box.first.as<std::string>());
-        fBoxes.push_back(aabb{box.second["width"].as<cl::float3>().data, box.second["center"].as<cl::float3>().data,
-                             material->second});
+
+        aabb newBox;
+        newBox.width = box.second["width"].as<cl::float3>().data;
+        newBox.center = box.second["center"].as<cl::float3>().data;
+        newBox.texNorm = box.second["texNorm"].as<cl::float3>(box.second["width"].as<cl::float3>()).data;
+        newBox.material = material->second;
+
+        fBoxes.push_back(newBox);
       }
 
       const auto skyMaterial = nameToMaterialIndex.find(document["skybox"]["material"].as<std::string>());
       if(skyMaterial == nameToMaterialIndex.end()) throw exception("Failed to lookup material for the skybox named " + document["skybox"]["material"].as<std::string>());
       fSkybox = {document["skybox"]["width"].as<cl::float3>().data, document["skybox"]["center"].as<cl::float3>().data,
-                skyMaterial->second};
+                 document["skybox"]["texNorm"].as<cl::float3>(document["skybox"]["width"].as<cl::float3>()).data, skyMaterial->second};
 
       fFloorY = fSkybox.center.y - fSkybox.width.y/2.;
 
@@ -298,7 +303,9 @@ namespace app
       assert(distToSkybox > 0 && "The user clicked on something outside the skybox!");
       const auto intersection = fromCamera.position + fromCamera.direction * distToSkybox;
       boxNames.push_back("defaultBox");
-      fBoxes.push_back(aabb{cl::float3{0.1, 0.1, 0.1}, cl::float3{intersection.x, fFloorY, intersection.z},
+      fBoxes.push_back(aabb{cl::float3{0.1, 0.1, 0.1},
+                            cl::float3{intersection.x, fFloorY, intersection.z},
+                            cl::float3{0.1, 0.1, 0.1},
                             fBoxes.empty()?fSkybox.material:fBoxes.back().material});
       found = std::prev(fBoxes.end());
     }

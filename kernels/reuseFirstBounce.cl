@@ -117,6 +117,9 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
       //Otherwise, scatter this ray off of whatever it hit and intersect the scene again
       scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material, textures, textureSampler);
       material = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, &texCoords, skybox);
+
+      //TODO: Intersect a plane for the ground instead of checking normal
+      //      on the skybox.
       hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
     }
 

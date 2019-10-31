@@ -9,11 +9,18 @@
 
 typedef struct aabb_tag
 {
-  CL(float3) width;
-  CL(float3) center;
+  CL(float3) width; //x, y, and z total widths
+  CL(float3) center; //Center in global coordinates
+  CL(float3) texNorm; //Divide position on a face by these values to get
+                      //texture coordinates.  Setting this to match width
+                      //stretches a texture over a box's face.  Setting it
+                      //to {1.f, 1.f, 1.f} maps a texture across a
+                      //building's face at the texture's original size,
+                      //repeating if necessary.
 
   SCALAR(int) material;
   //Dummy ints to ensure same alignment on host and device
+  //TODO: Could I fit 3 floats in here?
   SCALAR(int) dummy1;
   SCALAR(int) dummy2;
   SCALAR(int) dummy3;

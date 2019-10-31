@@ -394,6 +394,7 @@ namespace app
     ImGui::InputText("name", &selection->name, ImGuiInputTextFlags_EnterReturnsTrue);
     if(ImGui::InputFloat3("center", selection->box.center.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
     if(ImGui::InputFloat3("size", selection->box.width.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+    if(ImGui::InputFloat3("texture normalization", selection->box.texNorm.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
 
     //Material chooser and editor
     if(ImGui::ListBoxHeader("Material"))
