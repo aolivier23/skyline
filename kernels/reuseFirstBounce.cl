@@ -54,12 +54,12 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
                                                              :(float3)(0.f, -normal.z, normal.y));
   const float3 localYAxis = cross(normal, localXAxis);
 
-  const float4 color = read_imagef(textures, textureSampler, (float4){texCoords, 0.}); 
+  const float4 color = read_imagef(textures, textureSampler, (float4){texCoords, 0.});
 
   //TODO: Fresnel equation: the fraction of light that is reflected or transmmitted depends on direction.
   //Do specular reflections color.w percent of the time and diffuse otherwise.
   //
-  //I could try to do mathematical shenanigans here, but they have to be at least quadratic because I have
+  //I could try mathematical shenanigans here, but they have to be at least quadratic because I have
   //3 boundary conditions (0 at random = 0, 1.99 at random = 1, and 1 at random = w).  Getting the floating
   //point precision effects correct with that quadratic makes this problem far too challenging compared to
   //what I gain.  I can't even notice the performance difference yet.
@@ -72,8 +72,8 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   //the small angle approximation.
   const float3 randomDir = localXAxis*theta*native_cos(phi) + localYAxis*theta*native_sin(phi) + normal*sqrt(1.f-theta*theta),
                reflectDir = thisRay->direction - 2.f*dot(thisRay->direction, normal)*normal;
-  thisRay->direction = (1.f - isSpecular)*randomDir + isSpecular * reflectDir; //N.B.: isSpecular is always either 0 or 1, so these
-                                                                               //      directions should never actually be mixed.
+  thisRay->direction = (1 - isSpecular)*randomDir + isSpecular * reflectDir; //N.B.: isSpecular is always either 0 or 1, so these
+                                                                             //      directions should never actually be mixed.
 
   *lightColor += *maskColor * struckMaterial->emission;
   *maskColor *= color.xyz * dot(thisRay->direction, normal);
@@ -108,7 +108,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   //Reuse first intersection before relfection for each sample of this pixel.
   float3 normal, texCoords, lightColor = {0.f, 0.f, 0.f}, maskColor = {1.f, 1.f, 1.f};
   long int material = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, &texCoords, skybox);
-  bool hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
+  bool hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y); //TODO: Handle the ground with a plane intersection instead of branching.
 
   //For each sample of this pixel
   for(size_t sample = 0; sample < nSamplesPerFrame; ++sample)
