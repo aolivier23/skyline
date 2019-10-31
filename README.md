@@ -60,7 +60,6 @@ level.
 
 - Special case of [builder app](#builder-app)?  Maybe disable some GUI features with a
   compile-time flag?  Otherwise, renderer becomes an object.
-- TODO: YAML prototype.  Probably makes sense for [oneCell](#oneCell-app) too.
 
 ##builder app
 
@@ -100,7 +99,6 @@ level.
 
 - Many city blocks are axis-aligned
 - Better performance: fewer dot products
-- TODO: Were normals on corners failing in gdmlRaytrace?
 
 ##BVH algorithm
 
@@ -118,7 +116,7 @@ level.
 
 ##color and reflectivity algorithm
 
-- Texture mapping -> RGBA?
+- Texture mapping -> RGBA
 - Seems like mipmapping useful here
 - Objects inside buildings?
 
@@ -217,3 +215,20 @@ level.
   once.  I remember global atomic operations being a major source of slowdown, so I guess I
   should only do all of this for rays close to each other.  Swapping out kernels dynamically
   from the engine GUI is starting to sound more interesting.
+
+##Textures
+
+- I can display textures on boxes and the skybox now!
+- TODO: Get oneCell working with textures.
+- TODO: I sometimes get a circular pattern of black spots on textures from about 2-3 units
+        away.  I think a similar visual artifact was caused by a bad choice for epsilon in
+        gdmlRaytrace.
+- Dear ImGUI has features to integrate textures into GUIs, but it doesn't have an obvious
+  way to select an image.  I have to change whatever part of the OpenGL3 example consumes
+  ImTextureID and basically write my own vertex and fragment shaders to display textures
+  from a TextureArray2D.
+- Instead, I could display new textures on the selected object.  I already have machinery
+  to look up the clicked material.
+- I plan to change all objects that use a given material at once.  In the box editor, I'll
+  have a "Clone Material" button to change a box's material.  I guess this would be a good
+  place to select a material as well.

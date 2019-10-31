@@ -80,6 +80,14 @@ namespace app
       //no such box, create a new one where this ray intersects fSkybox.
       std::unique_ptr<selected> select(const ray fromCamera);
 
+      //Read-only access to list of materials.  Useful for a GUI
+      //to select a new material.
+      //TODO: I'll need some other interface to add a new material.
+      inline const std::map<std::string, int>& listMaterials() const
+      {
+        return nameToMaterialIndex;
+      }
+
     private:
       //Serialized data that's matched to metadata.  This is a copy of
       //the data on the GPU.

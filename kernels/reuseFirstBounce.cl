@@ -81,12 +81,6 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
 
 float3 sampleSky(const float3 texCoords, const float3 maskColor, __read_only image2d_array_t textures, sampler_t textureSampler)
 {
-  //TODO: Look up struck emission color from textures.  I'll need one for each
-  //      of the ceiling and the 4 walls.
-  //return maskColor * (float3){0.529, 0.808, 0.922}; //Sky blue from https://www.colorhexa.com/87ceeb
-
-  //TODO: 4th component becomes reflectivity
-
   return maskColor * read_imagef(textures, textureSampler, (float4){texCoords, 0.}).xyz;
 }
 

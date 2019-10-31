@@ -384,7 +384,7 @@ namespace app
     return changed;
   }
 
-  bool editBox(std::unique_ptr<CmdLine::selected>& selection)
+  bool editBox(std::unique_ptr<CmdLine::selected>& selection, const CmdLine& geometry)
   {
     //If I call editBox at all, that means that selection is not nullptr and so the GUI should open.
     bool isOpen = true, changed = false;
@@ -395,7 +395,25 @@ namespace app
     if(ImGui::InputFloat3("center", selection->box.center.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
     if(ImGui::InputFloat3("size", selection->box.width.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
 
-    //TODO: Material chooser and editor
+    //Material chooser and editor
+    if(ImGui::ListBoxHeader("Material"))
+    {
+      for(const auto& material: geometry.listMaterials()) //TODO: Get list of materials from geometry
+      {
+        if(ImGui::Selectable(material.first.c_str(), material.second == selection->box.material))
+        {
+          selection->box.material = material.second;
+          changed = true;
+        }
+      }
+      ImGui::ListBoxFooter();
+
+      //TODO: "Clone Material" button
+      //TODO: GUI to create new material
+    }
+
+    //TODO: Material editor here?
+
     ImGui::End();
 
     if(!isOpen) selection.reset();

@@ -48,7 +48,7 @@ namespace app
   //Returns true if something about selection changed that needs to be uploaded
   //to the GPU.  reset()ing selection de-selects that box.  That should happen
   //when the editor window drawn here is closed.
-  bool editBox(std::unique_ptr<CmdLine::selected>& selection);
+  bool editBox(std::unique_ptr<CmdLine::selected>& selection, const CmdLine& geometry);
 }
 
 #endif //APP_GUI_H

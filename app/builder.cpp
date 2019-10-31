@@ -299,7 +299,6 @@ int main(const int argc, const char** argv)
           //TODO: CTRL + click for multi-selection
           selection = std::move(params.select(fromCamera));
 
-          std::cout << "Selected a box named " << selection->name << "\n";
           params.sendToGPU(ctx);
           change.onCameraChange();
         }
@@ -323,7 +322,7 @@ int main(const int argc, const char** argv)
 
         if(selection)
         {
-          if(app::editBox(selection))
+          if(app::editBox(selection, params))
           {
             //Only update GPU data if something changed.
             params.sendToGPU(ctx);
