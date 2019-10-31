@@ -108,10 +108,6 @@ namespace app
         document = YAML::LoadFile(std::string(INSTALL_DIR) + "/include/examples/" + fileName);
       }
 
-      //A temporary place to map texture names to indices
-      //TODO: Make this cache permanent once I've decided on the format the GUI needs
-      std::vector<std::string> texturesToCreate;
-
       //Map the YAML configuration file to a geometry to render using a few keywords
       const auto& matMap = document["materials"];
 
@@ -123,12 +119,12 @@ namespace app
         //TODO: As an alternative, read color and generate a texture of pure color.
         fMaterials.push_back(material{mat.second["emission"].as<cl::float3>(cl::float3()).data,
                              {
-                               ::findOrCreate(mat.second["left"].as<std::string>(), texturesToCreate),
-                               ::findOrCreate(mat.second["right"].as<std::string>(), texturesToCreate),
-                               ::findOrCreate(mat.second["top"].as<std::string>(), texturesToCreate),
-                               ::findOrCreate(mat.second["bottom"].as<std::string>(), texturesToCreate),
-                               ::findOrCreate(mat.second["front"].as<std::string>(), texturesToCreate),
-                               ::findOrCreate(mat.second["back"].as<std::string>(), texturesToCreate),
+                               ::findOrCreate(mat.second["left"].as<std::string>(), textureNames),
+                               ::findOrCreate(mat.second["right"].as<std::string>(), textureNames),
+                               ::findOrCreate(mat.second["top"].as<std::string>(), textureNames),
+                               ::findOrCreate(mat.second["bottom"].as<std::string>(), textureNames),
+                               ::findOrCreate(mat.second["front"].as<std::string>(), textureNames),
+                               ::findOrCreate(mat.second["back"].as<std::string>(), textureNames),
                                0,
                                0
                              }});
@@ -168,35 +164,35 @@ namespace app
 
       //I have to load a texture to get its size before allocating memory on the GPU.
       //Or, I could get a constant size for textures somewhere else.
-      auto pixels = stbi_load(texturesToCreate[0].c_str(), &width, &height, &channels, STBI_rgb_alpha);
+      auto pixels = stbi_load(textureNames[0].c_str(), &width, &height, &channels, STBI_rgb_alpha);
       if(!pixels)
       {
-        std::cerr << "Couldn't find " << texturesToCreate[0] << ", so trying to load "
-                  << std::string(INSTALL_DIR) + "/include/examples/" + texturesToCreate[0] << " instead...\n";
-        pixels = stbi_load((std::string(INSTALL_DIR) + "/include/examples/" + texturesToCreate[0]).c_str(), &width, &height, &channels, STBI_rgb_alpha);
+        std::cerr << "Couldn't find " << textureNames[0] << ", so trying to load "
+                  << std::string(INSTALL_DIR) + "/include/examples/" + textureNames[0] << " instead...\n";
+        pixels = stbi_load((std::string(INSTALL_DIR) + "/include/examples/" + textureNames[0]).c_str(), &width, &height, &channels, STBI_rgb_alpha);
       }
-      if(!pixels) throw exception("Failed to load a texture from " + texturesToCreate[0]);
+      if(!pixels) throw exception("Failed to load a texture from " + textureNames[0]);
 
-      fTextures.reset(new gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>(width, height, texturesToCreate.size()));
+      fTextures.reset(new gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>(width, height, textureNames.size()));
       fTextures->insert(0, buildingFormat, pixels);
       stbi_image_free(pixels);
 
-      for(size_t whichFile = 1; whichFile < texturesToCreate.size(); ++whichFile)
+      for(size_t whichFile = 1; whichFile < textureNames.size(); ++whichFile)
       {
-        pixels = stbi_load(texturesToCreate[whichFile].c_str(), &width, &height, &channels, STBI_rgb_alpha);
+        pixels = stbi_load(textureNames[whichFile].c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
         //If we failed to load pixels, try to load from the examples that ship with skyline.
         //TODO: Look for texture search directories in the YAML file.
         if(!pixels)
         {
-          std::cerr << "Couldn't find " << texturesToCreate[whichFile] << ", so trying to load "
-                    << std::string(INSTALL_DIR) + "/include/examples/" + texturesToCreate[whichFile] << " instead...\n";
-          pixels = stbi_load((std::string(INSTALL_DIR) + "/include/examples/" + texturesToCreate[whichFile]).c_str(), &width, &height, &channels, STBI_rgb_alpha);
+          std::cerr << "Couldn't find " << textureNames[whichFile] << ", so trying to load "
+                    << std::string(INSTALL_DIR) + "/include/examples/" + textureNames[whichFile] << " instead...\n";
+          pixels = stbi_load((std::string(INSTALL_DIR) + "/include/examples/" + textureNames[whichFile]).c_str(), &width, &height, &channels, STBI_rgb_alpha);
         }
-        if(!pixels) throw exception("Failed to load a texture from " + texturesToCreate[whichFile]);
+        if(!pixels) throw exception("Failed to load a texture from " + textureNames[whichFile]);
         if(!fTextures->checkDimensions(width, height))
         {
-          throw exception(texturesToCreate[whichFile] + " has different dimensions from the first texture in this file.  "
+          throw exception(textureNames[whichFile] + " has different dimensions from the first texture in this file.  "
                           "All textures must have the same dimensions.");
         }
 
@@ -234,6 +230,12 @@ namespace app
       auto inFile = mats[inMemory.first];
       //inFile["color"] = cl::float3(fMaterials[inMemory.second].color);
       inFile["emission"] = cl::float3(fMaterials[inMemory.second].emission);
+      inFile["left"] = textureNames[fMaterials[inMemory.second].textures.data.s[0]];
+      inFile["right"] = textureNames[fMaterials[inMemory.second].textures.data.s[1]];
+      inFile["top"] = textureNames[fMaterials[inMemory.second].textures.data.s[2]];
+      inFile["bottom"] = textureNames[fMaterials[inMemory.second].textures.data.s[3]];
+      inFile["front"] = textureNames[fMaterials[inMemory.second].textures.data.s[4]];
+      inFile["back"] = textureNames[fMaterials[inMemory.second].textures.data.s[5]];
     }
 
     auto geom = newFile["geometry"];
@@ -243,12 +245,14 @@ namespace app
       inFile["width"] = cl::float3(fBoxes[whichBox].width);
       inFile["center"] = cl::float3(fBoxes[whichBox].center);
       inFile["material"] = materialIndexToName[fBoxes[whichBox].material];
+      inFile["texNorm"] = cl::float3(fBoxes[whichBox].texNorm);
     }
 
     auto sky = newFile["skybox"];
     sky["width"] = cl::float3(fSkybox.width);
     sky["center"] = cl::float3(fSkybox.center);
     sky["material"] = materialIndexToName[fSkybox.material];
+    sky["texNorm"] = cl::float3(fSkybox.texNorm);
 
     auto cams = newFile["cameras"];
     for(const auto& inMemory: cameras)

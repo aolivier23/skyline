@@ -100,6 +100,8 @@ namespace app
       std::map<std::string, int> nameToMaterialIndex;
       std::vector<std::string> boxNames; //I chose to use parallel arrays because I need fBoxes to be tightly packed
                                          //for upload to the GPU.
+      std::vector<std::string> textureNames; //Names of files where I got textures that are now on the GPU.  Index in this array is index in
+                                             //the texture array on the GPU.
 
       //Data to help create new boxes
       float fFloorY; //Height of the bottom of fSkybox in global coordinates

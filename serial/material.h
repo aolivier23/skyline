@@ -14,6 +14,5 @@ typedef struct material_tag
   //dummy values for alignment) when the z axis is pointing from back to front and the y axis is
   //up.
   CL(uchar8) textures;
-  CL(float3) norm; //Normalize positions by this vector when calculating texture coordinates.
 } material;
 #endif //MATERIAL_H
