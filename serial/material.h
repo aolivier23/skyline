@@ -14,5 +14,6 @@ typedef struct material_tag
   //dummy values for alignment) when the z axis is pointing from back to front and the y axis is
   //up.
   CL(uchar8) textures;
+  CL(uchar8) dummy; //For padding
 } material;
 #endif //MATERIAL_H

@@ -134,6 +134,7 @@ namespace app
       const auto& boxMap = document["geometry"];
       for(const auto& box: boxMap)
       {
+        std::cout << "Loading a new box named " << box.first.as<std::string>() << "\n"; //TODO: Remove me
         boxNames.push_back(box.first.as<std::string>());
         const auto material = nameToMaterialIndex.find(box.second["material"].as<std::string>());
         if(material == nameToMaterialIndex.end()) throw exception("Failed to look up a material named " + box.second["material"].as<std::string>()
@@ -142,11 +143,14 @@ namespace app
         aabb newBox;
         newBox.width = box.second["width"].as<cl::float3>().data;
         newBox.center = box.second["center"].as<cl::float3>().data;
-        newBox.texNorm = box.second["texNorm"].as<cl::float3>(box.second["width"].as<cl::float3>()).data;
+        newBox.texNorm = box.second["texNorm"].as<cl::float3>(newBox.width).data;
         newBox.material = material->second;
+
+        std::cout << "New box has width of " << newBox.width << " and center of " << newBox.center << "\n";
 
         fBoxes.push_back(newBox);
       }
+      std::cout << "After loading all boxes except the skybox, fBoxes.size() is " << fBoxes.size() << "\n"; //TODO: Remove me
 
       const auto skyMaterial = nameToMaterialIndex.find(document["skybox"]["material"].as<std::string>());
       if(skyMaterial == nameToMaterialIndex.end()) throw exception("Failed to lookup material for the skybox named " + document["skybox"]["material"].as<std::string>());
@@ -157,7 +161,6 @@ namespace app
 
       //Load textures
       //TODO: oneCell has to be updated to use a kernel compatible with textures. 
-      //TODO: Update example sky texture
       const unsigned int buildingFormat = GL_RGBA;
       int channels = 4;
       int width, height;
@@ -211,6 +214,10 @@ namespace app
       throw exception(e.what());
     }
 
+    //TODO: Remove me
+    std::cout << "Box names after deserialization:\n";
+    for(const auto& name: boxNames) std::cout << name << "\n";
+
     return document;
   }
 
@@ -223,7 +230,6 @@ namespace app
     //Serialize the application state.
     YAML::Node newFile;
 
-    //TODO: Update write() to serialize texture names
     auto mats = newFile["materials"];
     for(const auto& inMemory: nameToMaterialIndex)
     {
@@ -241,7 +247,20 @@ namespace app
     auto geom = newFile["geometry"];
     for(size_t whichBox = 0; whichBox < fBoxes.size(); ++whichBox)
     {
+      //Ensure that each box gets a unique name.  Repeated names
+      //are OK, but not encouraged, interactively, but they get
+      //overwritten when writing the YAML file here.  I could
+      //imagine the user manually making file names the same, so
+      //this seems to be my opportunity to fix the problem with
+      //one point of maintanence.
+
+      //Adapt repeated box names so that they all get to the YAML file.
+      while(geom[boxNames[whichBox]])
+      {
+        boxNames[whichBox] += "_copy";
+      }
       auto inFile = geom[boxNames[whichBox]];
+
       inFile["width"] = cl::float3(fBoxes[whichBox].width);
       inFile["center"] = cl::float3(fBoxes[whichBox].center);
       inFile["material"] = materialIndexToName[fBoxes[whichBox].material];
@@ -275,6 +294,12 @@ namespace app
 
   void CmdLine::sendToGPU(cl::Context& ctx)
   {
+    std::cout << "Sending " << std::distance(fBoxes.begin(), fBoxes.end()) << " boxes to the GPU:\n";
+    for(const auto& box: fBoxes)
+    {
+      std::cout << "width: " << box.width << " center: " << box.center << " material: " << box.material << " texNorm: " << box.texNorm << "\n";
+    }
+
     fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
     fDevSkybox = cl::Buffer(ctx, &fSkybox, &fSkybox + 1, false);

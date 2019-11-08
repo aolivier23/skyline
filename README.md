@@ -251,3 +251,26 @@ level.
   aren't getting mapped correctly to the edges of buildings.
 - Emission from texture for window lights in night scenes.  I've left emission as a member variable of material for now.
 - Support higher resolution sky texture in the example and figure out what happened to the sun.
+- Textured inner box for all buildings and do fresnel equations based on "alpha" channel to transmit light into buildings.
+- Camera jitter on the GPU instead of the CPU.  I think it would be a lot less jarring if each pixel shook independently.
+  I think I'm going to lose first intersection reuse when I upgrade my camera model to simulate a lens anyway.
+
+##Sky
+
+Currently, I have a skybox.  I was afraid that mapping a texture onto a dome would be too difficult for geometry
+authors (i.e. me).  The ground is also handled with branching right now.
+
+- Replace skybox with a sky dome.  Looks like I can get a not-so-horrible mapping of a rectangular texture onto
+  a sphere like this: `https://en.wikipedia.org/wiki/UV_mapping`
+- Ground becomes a plane intersection.  No need to check normals anymore!
+- No additional overhead from dome intersection because I know there's exactly 1 sphere per scene.
+- It will become much easier to simulate the sun now.  I could simulate it as a sphere or a circle (think
+  plane intersection) on the sky dome.  Sun has just a constant emission color and no absorption color.
+- Sun's color sets the highest light scale -> High Dynamic Range (HDR)!  learnopengl has a good article
+  about HDR.
+- Easy to move the sun now as a kernel parameter.  Maybe even build a CPU control component to move it
+  with a GUI or with time.  For sunsets, I'd want to gradually transition the sky dome's texture though.
+- Sky dome texture's alpha channel is interpretted as alpha instead of reflectivity.  The sun is "behind"
+  the sky dome so that clouds can partially occlude sunlight.
+- Set sky dome radius based on tallest loaded building on CPU?  sendToGPU() would be a good time to do that.
+- I could map a texture onto the "sun" if I want to simulate the moon instead.
