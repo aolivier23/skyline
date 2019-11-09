@@ -9,7 +9,7 @@
 #define APP_GUI_H
 
 //app includes
-#include "app/CmdLine.h"
+#include "app/Geometry.h"
 
 class ImGuiIO;
 
@@ -25,7 +25,7 @@ namespace app
   bool handleCamera(eng::WithCamera& view, const ImGuiIO& io);
 
   //Draw a menu allowing the user to select and configure a CameraModel.
-  void drawCameras(CmdLine& app, eng::WithCamera& view);
+  void drawCameras(Geometry& app, eng::WithCamera& view);
 
   //Draw a window displaying application metrics like framerate and time to
   //complete the path tracing kernel(s).
@@ -36,7 +36,7 @@ namespace app
 
   //Show a menu for loading a new geometry or saving the application state to
   //a YAML file.  Returns true if a new file has been loaded into app.
-  bool drawFile(app::CmdLine& app);
+  bool drawFile(app::Geometry& app);
 
   //Show a window for controlling the skyline engine.  Exposes features like
   //the number of bounces per frame and number of samples per frame.
@@ -48,7 +48,7 @@ namespace app
   //Returns true if something about selection changed that needs to be uploaded
   //to the GPU.  reset()ing selection de-selects that box.  That should happen
   //when the editor window drawn here is closed.
-  bool editBox(std::unique_ptr<CmdLine::selected>& selection, const CmdLine& geometry);
+  bool editBox(std::unique_ptr<Geometry::selected>& selection, const Geometry& geometry);
 }
 
 #endif //APP_GUI_H

@@ -5,6 +5,11 @@
 #better reflect the memory hierarchy needed for the GPU.
 skyboxSize: &skyboxSize [100., 2., 100.]
 
+sky: "testSkyTexture.png"
+ground: "testGround.png"
+sun:
+  color: [6., 4., 2.]
+
 materials:
   boxMaterial:
     left: "testBuildingSides.png"
@@ -24,15 +29,6 @@ materials:
     back: "MarbleBuilding.png"
     emission: [0., 0., 0.]
   
-  skyMaterial:
-    left: "testSkyBlue.png"
-    right: "testSkyBlue.png"
-    top: "testSkyTexture.png"
-    bottom: "testGround.png"
-    front: "testSkyBlue.png"
-    back: "testSkyBlue.png"
-    emission: [0., 0., 0.]
-  
 geometry:
   #TODO: Allow more BVH information here?  oneCell will just ignore it
   #      anyway.  Eventually, some really smart BVH algorithm could
@@ -49,13 +45,7 @@ geometry:
     material: "marble"
     texNorm: [0.1, 0.1, 0.1]
 
-skybox:
-  width: *skyboxSize
-  center: [0., 0., 0.]
-  material: "skyMaterial"
-  texNorm: *skyboxSize
-
 cameras:
   default:
-    position: [0., 0, 0.9]
+    position: [0., 0.2, 0.9]
     focal: [0., 0.2, 0.0]

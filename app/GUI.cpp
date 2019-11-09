@@ -7,7 +7,7 @@
 
 //app includes
 #include "app/GUI.h"
-#include "app/CmdLine.h"
+#include "app/Geometry.h"
 
 //camera includes
 #include "camera/CameraController.h"
@@ -64,15 +64,15 @@ namespace
   }
 
   //Select the volume under a pixel by path tracing on the host.
-  //TODO: Should this be a member function of CmdLine to access the aabbs
+  //TODO: Should this be a member function of Geometry to access the aabbs
   //      on the host?  I could imagine using it with CameraController
   //      directly in oneCell and skyline.  I have to remember to upload
-  //      each change that I make to the GPU, and CmdLine might be a good
+  //      each change that I make to the GPU, and Geometry might be a good
   //      place to centralize that behavior.  Some kind of smart pointer
   //      that calls uploadToGPU() after each non-const access or on
   //      destruction might be ideal.  If I'm going to expose aabbs, I
   //      have to expose materials too.
-  /*aabb& select(const app::CmdLine& geom)
+  /*aabb& select(const app::Geometry& geom)
   {
     
   }*/
@@ -118,7 +118,7 @@ namespace app
   }
 
   //Draw a menu allowing the user to select and configure a CameraModel.
-  void drawCameras(CmdLine& app, eng::WithCamera& view)
+  void drawCameras(Geometry& app, eng::WithCamera& view)
   {
     static bool isOpen = false;
 
@@ -247,10 +247,10 @@ namespace app
   }
 
   //Draw a file selection window if the "file" menu item is clicked.
-  //Allows the user to load a new CmdLine from a file.  The file is selected
+  //Allows the user to load a new Geometry from a file.  The file is selected
   //from a list tree rooted in a working directory internal to this function.
   //Returns true if a new file was loaded.
-  bool drawFile(app::CmdLine& app)
+  bool drawFile(app::Geometry& app)
   {
     static bool showOpen = false, showSave = false;
 
@@ -291,7 +291,7 @@ namespace app
       std::string fileName;
       if(::directoryTree(pwd, pwd, fileName))
       {
-        app::CmdLine newFile;
+        app::Geometry newFile;
         try
         {
           newFile.load(fileName);
@@ -300,7 +300,7 @@ namespace app
           ImGui::End();
           return true;
         }
-        catch(const CmdLine::exception& e)
+        catch(const Geometry::exception& e)
         {
           //TODO: Warn the user somehow that we couldn't open fileName
         }
@@ -358,7 +358,7 @@ namespace app
       ImGui::End();
     }
 
-    //TODO: Load a model by adding to the current CmdLine?  I'd have to be clever and avoid
+    //TODO: Load a model by adding to the current Geometry?  I'd have to be clever and avoid
     //      creating a new skybox.
 
     return false;
@@ -384,7 +384,7 @@ namespace app
     return changed;
   }
 
-  bool editBox(std::unique_ptr<CmdLine::selected>& selection, const CmdLine& geometry)
+  bool editBox(std::unique_ptr<Geometry::selected>& selection, const Geometry& geometry)
   {
     //If I call editBox at all, that means that selection is not nullptr and so the GUI should open.
     bool isOpen = true, changed = false;

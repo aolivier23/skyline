@@ -9,6 +9,11 @@
 //local includes
 #include "algebra/vector.h"
 
+//serial includes
+#define NOT_ON_DEVICE
+#include "serial/vector.h"
+#include "serial/camera.h"
+
 //c++ includes
 #include <random>
 
@@ -17,7 +22,7 @@ namespace eng
   class CameraModel
   {
     public:
-      CameraModel(const cl::float3& pos, const cl::float3& focal = {0., 0., 1.});
+      CameraModel(const cl::float3& pos, const cl::float3& focal = {0., 0., 1.}, const float size = 1.f);
       virtual ~CameraModel();
 
       //Manipulate the camera
@@ -32,20 +37,19 @@ namespace eng
       void setJitter(const double stddev);
 
       //Accessors to Camera properties that are useful to send to OpenGL
+      inline const camera& state() const { return fCameraState; }
       cl::float3 position() const;
-      inline const cl::float3 exactPosition() const { return fPosition; } //Without camera jitter
-      inline const cl::float3& focalPlane() const { return fFocalPlane; }
-      inline const cl::float3& up() const { return fUp; }
-      inline const cl::float3& right() const { return fRight; }
+      inline const cl::float3 exactPosition() const { return {fCameraState.position.x, fCameraState.position.y, fCameraState.position.z}; } //Without camera jitter
+      inline const cl::float3& focalPlane() const { return fCameraState.focalPos; }
+      inline const cl::float3& up() const { return fCameraState.up; }
+      inline const cl::float3& right() const { return fCameraState.right; }
 
     protected:
       //Camera description
-      cl::float3 fPosition; //Displacement of the camera from the origin
-      cl::float3 fFocalPlane; //Vector from fPosition to the center of the focal plane
-      cl::float3 fUp; //"Up" direction for the camera.  Orthogonal to both fFocalPlane and fRight.
-      cl::float3 fRight; //"Right" direction for the camera.  Orthogonal to both fFocalPlane and fUp.
+      camera fCameraState;
 
       //State for camera jitter.  Implements anti-aliasing.
+      //TODO: Move camera jitter onto the GPU to make pixels independent
       mutable std::minstd_rand0 fLCGen;
       mutable std::normal_distribution<double> fDist; 
       //mutable std::uniform_real_distribution<float> fUniform;

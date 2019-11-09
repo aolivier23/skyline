@@ -2,9 +2,10 @@
 //Brief: Edit a skyline geometry file with a GUI.  Also lets the user
 //       explore the scene with the skyline engine and serialize the
 //       current geometry into a file for skyline to consume.  See
-//       CmdLine.cpp for usage.
+//       Geometry.cpp for usage.
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+//TODO: Remove redundant includes
 //OpenCL includes
 #define __CL_ENABLE_EXCEPTIONS //OpenCL c++ API now throws exceptions
 #include <CL/cl.hpp>
@@ -14,11 +15,12 @@
 #include "glad/include/glad/glad.h"
 
 //app includes
-#include "app/CmdLine.h"
+#include "app/Geometry.h"
 #include "app/GUI.h"
+#include "app/LoadIntoCL.h"
 
 //algorithms borrowed from OpenCL kernel
-#include "kernels/generateRay.cl"
+#include "serial/camera.cpp"
 
 //camera includes
 #include "camera/FPSController.h"
@@ -95,125 +97,37 @@ int main(const int argc, const char** argv)
 
   //Parse the command line for a configuration file.
   //This de-serializes the geometry to render and camera configurations.
-  app::CmdLine params;
+  app::Geometry geom;
 
   try
   {
-    params.load(argc, argv);
+    geom.load(argc, argv);
   }
-  catch(const app::CmdLine::exception& e)
+  catch(const app::Geometry::exception& e)
   {
     std::cerr << e.what();
     return CMD_LINE_ERROR;
   }
 
   //Get the first GPU device among all platforms that matches the current OpenGL context
-  std::vector<cl::Platform> platforms;
-  cl::Platform::get(&platforms);
-  std::vector<cl::Device> devices;
-
-  cl::Device chosen;
-  cl::Context ctx;
-  auto platform = platforms.begin();
-  for(; platform != platforms.end() /*&& devices.empty()*/; ++platform)
-  {
-    try
-    {
-      platform->getDevices(CL_DEVICE_TYPE_GPU, &devices);
-    }
-    catch(const cl::Error& e)
-    {
-      if(e.err() != CL_DEVICE_NOT_FOUND) throw e;
-    }
-
-    //FIXME: This part needs to change based on backend GLFW is using
-    cl_context_properties prop[] = {
-                                     CL_GL_CONTEXT_KHR, (cl_context_properties)glfwGetGLXContext(window),
-                                     CL_GLX_DISPLAY_KHR, (cl_context_properties)glfwGetX11Display(),
-                                     CL_CONTEXT_PLATFORM, (cl_context_properties)(*platform)(),
-                                     0
-                                   };
-
-    //Check if this device has a current OpenGL context
-    const auto found = std::find_if(devices.begin(), devices.end(), 
-                                    [&ctx, &prop](const cl::Device& dev) 
-                                    { 
-                                      //Hack to exclude my Intel card which has weird drivers atm
-                                      if(dev.getInfo<CL_DEVICE_VENDOR>().find("Intel") != std::string::npos) return false;
-
-
-                                      const auto exts = dev.getInfo<CL_DEVICE_EXTENSIONS>();
-                                      if(exts.find("cl_khr_gl_sharing") != std::string::npos)
-                                      {
-                                        cl_int status;
-                                        ctx = cl::Context(dev, prop, NULL, NULL, &status);
-                                        if(status != CL_SUCCESS)
-                                        {
-                                          std::cout << "Can't create an OpenCL context that shares with OpenGL on "
-                                                    << dev.getInfo<CL_DEVICE_NAME>() << "\n";
-                                          return false; //Device not compatible with OpenGL
-                                        }
-                                        return true; //Sucessfully created context
-                                      }
-                                      return false; //Device not compatible with sharing extension
-                                    });
-    //Learned to do this from https://github.com/9prady9/CLGLInterop/blob/master/examples/partsim.cpp
-    if(found != devices.end())
-    {
-      chosen = *found;
-      break; //platform is also implicitly set by breaking here
-    }
-  }
-
-  if(platform == platforms.end())
-  {
-    std::cerr << "Couldn't find an OpenCL-capable GPU with the CL_GL_SHARING_EXT extension.\n";
-    return SETUP_ERROR;
-  }
-
-  std::cout << "Chose to use device named " << chosen.getInfo<CL_DEVICE_NAME>() << "\n";
-
+  auto [ctx, chosen] = app::chooseDevice(window);
   cl::CommandQueue queue(ctx, chosen);
 
   //Create the OpenCL kernel from installed kernels
-  std::ifstream macros(INSTALL_DIR "/include/serial/vector.h");
-  std::istreambuf_iterator<char> macroBegin(macros), fileEnd;
-  std::string source(macroBegin, fileEnd);
-
-  std::ifstream rayHeader(INSTALL_DIR "/include/serial/ray.h");
-  std::istreambuf_iterator<char> rayBegin(rayHeader);
-  source.append(rayBegin, fileEnd);
-
-  std::ifstream materialHeader(INSTALL_DIR "/include/serial/material.h");
-  std::istreambuf_iterator<char> materialBegin(materialHeader);
-  source.append(materialBegin, fileEnd);
-
-  std::ifstream header(INSTALL_DIR "/include/serial/aabb.h");
-  std::istreambuf_iterator<char> headerBegin(header);
-  source.append(headerBegin, fileEnd);
-
-  std::ifstream functions(INSTALL_DIR "/include/serial/aabb.cpp");
-  std::istreambuf_iterator<char> functionsBegin(functions);
-  source.append(functionsBegin, fileEnd);
-
-  std::ifstream random(INSTALL_DIR "/include/kernels/linearCongruential.cl");
-  std::istreambuf_iterator<char> randomBegin(random);
-  source.append(randomBegin, fileEnd);
-
-  std::ifstream generator(INSTALL_DIR "/include/kernels/generateRay.cl");
-  std::istreambuf_iterator<char> generatorBegin(generator);
-  source.append(generatorBegin, fileEnd);
-
-  //std::ifstream main(INSTALL_DIR "/include/kernels/pathTrace.cl");
-  std::ifstream main(INSTALL_DIR "/include/kernels/reuseFirstBounce.cl");
-  std::istreambuf_iterator<char> mainBegin(main);
-  source.append(mainBegin, fileEnd);
-
-  /*#ifndef NDEBUG
-  std::cout << "Kernel source is:\n" << source << "\n";
-  #endif*/
-
-  cl::Program program(ctx, source);
+  auto program = app::constructSource(ctx, "kernels/reuseFirstBounce.cl",
+                                      {"serial/vector.h",
+                                       "serial/ray.h",
+                                       "serial/material.h",
+                                       "serial/aabb.h",
+                                       "serial/aabb.cpp",
+                                       "serial/sphere.h",
+                                       "serial/sphere.cpp",
+                                       "serial/groundPlane.h",
+                                       "serial/groundPlane.cpp",
+                                       "kernels/linearCongruential.cl",
+                                       "serial/camera.h",
+                                       "serial/camera.cpp"
+                                      });
 
   //Build OpenCL program
   try
@@ -235,7 +149,7 @@ int main(const int argc, const char** argv)
     return SETUP_ERROR;
   }
 
-  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, cl::Buffer, cl_float3, cl_float3, cl_float3, cl_float3, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
+  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
 
   //Set up viewport
   int width, height;
@@ -246,7 +160,7 @@ int main(const int argc, const char** argv)
   double initX = 0., initY = 0.;
   glfwGetCursorPos(window, &initX, &initY);
   eng::WithRandomSeeds change(window, ctx,
-                              std::make_unique<eng::FPSController>(params.cameras.front().second, 0.05, 0.02, initX, initY));
+                              std::make_unique<eng::FPSController>(geom.cameras.front().second, 0.05, 0.02, initX, initY));
 
   //Set up Dear ImGui
   //N.B.: This has to happen after changeWithWindowSize is constructed to override the GLFW keyboard handler.
@@ -260,12 +174,12 @@ int main(const int argc, const char** argv)
   ImGui_ImplOpenGL3_Init("#version 420");
 
   //Set up geometry to send to the GPU.  It was read in from the command line in a file.
-  params.sendToGPU(ctx);
+  geom.sendToGPU(ctx);
   cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST),
               textureSampler(ctx, true, CL_ADDRESS_REPEAT, CL_FILTER_LINEAR);
 
   //Selection state
-  std::unique_ptr<app::CmdLine::selected> selection;
+  std::unique_ptr<app::Geometry::selected> selection;
 
   //Render loop that calls OpenCL kernel
   while(!glfwWindowShouldClose(window))
@@ -278,12 +192,15 @@ int main(const int argc, const char** argv)
     //Run the skyline engine
     try
     {
-      std::vector<cl::Memory> mem = {*(change.glImage), params.textures()};
+      std::vector<cl::Memory> mem = {*(change.glImage), geom.textures()};
       queue.enqueueAcquireGLObjects(&mem);
-      pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)), *(change.glImage), sampler,
-                    *(change.clImage), params.boxes(), params.nBoxes(), params.materials(), params.skybox(), change.camera().position().data,
-                    change.camera().focalPlane().data, change.camera().up().data, change.camera().right().data, change.nBounces(), change.seeds(),
-                    ++change.nIterations(), change.nSamples(), params.textures(), textureSampler);
+      pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)),
+                *(change.glImage), sampler, *(change.clImage),
+                geom.boxes(), geom.nBoxes(), geom.materials(),
+                geom.sky(), geom.sun(), geom.sunEmission().data,
+                geom.groundTexNorm().data, change.camera().state(),
+                change.nBounces(), change.seeds(), ++change.nIterations(),
+                change.nSamples(), geom.textures(), textureSampler);
 
       if(!io.WantCaptureMouse)
       {
@@ -292,14 +209,14 @@ int main(const int argc, const char** argv)
           const auto pos = ImGui::GetMousePos();
           //GLFW's pixels have the reverse convention of OpenGL textures in the y direction.  So, I have
           //to flip pos.y before using it with generateRay().
-          const auto fromCamera = generateRay(cl::int2{pos.x, abs(pos.y - change.fHeight)}, change.camera().exactPosition(),
-                                              change.camera().focalPlane(), change.camera().up(),
-                                              change.camera().right(), change.fWidth, change.fHeight);
+          const auto fromCamera = generateRay(change.camera().state(), cl::int2{pos.x, abs(pos.y - change.fHeight)},
+                                              change.fWidth, change.fHeight);
 
+          //TODO: Check whether I'm clicking on the sun
           //TODO: CTRL + click for multi-selection
-          selection = std::move(params.select(fromCamera));
+          selection = std::move(geom.select(fromCamera));
 
-          params.sendToGPU(ctx);
+          geom.sendToGPU(ctx);
           change.onCameraChange();
         }
         else app::handleCamera(change, io);
@@ -308,13 +225,13 @@ int main(const int argc, const char** argv)
       //Draw GUI while kernel is running
       if(ImGui::BeginMainMenuBar())
       {
-        if(app::drawFile(params))
+        if(app::drawFile(geom))
         {
-          params.sendToGPU(ctx);
+          geom.sendToGPU(ctx);
           change.onCameraChange();
         }
         //TODO: edit menu with materials and skybox options
-        app::drawCameras(params, change);
+        app::drawCameras(geom, change);
         app::drawMetrics(io);
         app::drawHelp();
         if(app::drawEngine(change)) change.onCameraChange();
@@ -322,10 +239,10 @@ int main(const int argc, const char** argv)
 
         if(selection)
         {
-          if(app::editBox(selection, params))
+          if(app::editBox(selection, geom))
           {
             //Only update GPU data if something changed.
-            params.sendToGPU(ctx);
+            geom.sendToGPU(ctx);
             change.onCameraChange();
           }
 

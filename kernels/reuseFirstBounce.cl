@@ -9,41 +9,58 @@
  #define M_PI 3.1415926535897932384626433832f
 #endif
 
-//Test a ray for intersecting the aabbs in the scene.  Returns index of struck material or -1 on
-//hitting the skybox by value and normal and texture coordinates by reference.
+//Test a ray for intersecting the aabbs in the scene.  Returns texture coordinates by value
+//normal by reference.
 //Updates ray's position but not its direction.
-long int intersectScene(ray* thisRay, __global aabb* geometry, __global material* materials, const unsigned long int nBoxes, float3* normal,
-                        float3* texCoords, __global aabb* skybox)
+float3 intersectScene(ray* thisRay, __global aabb* geometry, __global material* materials, const unsigned long int nBoxes, float3* normal,
+                      const float2 groundTexNorm, sphere sky)
 {
-  //Find the closest aabb that this ray intersects
-  float closestDist = aabb_intersect(skybox, *thisRay);
-  __global const aabb* closestBox = skybox;
+  //Intersect the sky
+  float closestDist = FLT_MAX;
+  { //Parentheses to limit the scope of skyDist
+    const float skyDist = sphere_intersect(sky, *thisRay);
+    if(skyDist > 0) closestDist = skyDist;
+  }
+  float3 texCoords = sphere_tex_coords(sky, thisRay->position + thisRay->direction*closestDist);
+  *normal = sphere_normal(sky, thisRay->position + thisRay->direction*closestDist);
 
+  //Intersect the ground plane
+  { //Parentheses to limit the scope of groundDist
+    const float groundDist = groundPlane_intersect(*thisRay);
+    if(groundDist > 0 && groundDist < closestDist)
+    {
+      closestDist = groundDist;
+      texCoords = groundPlane_tex_coords(groundTexNorm, thisRay->position + thisRay->direction*closestDist);
+      *normal = groundPlane_normal(thisRay->position + thisRay->direction*closestDist);
+    }
+  }
+
+  //Intersect buildings
   for(size_t whichBox = 0; whichBox < nBoxes; ++whichBox)
   {
     const float dist = aabb_intersect(geometry + whichBox, *thisRay);
     if(dist > 0 && dist < closestDist)
     {
       closestDist = dist;
-      closestBox = geometry + whichBox;
+      *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
+                                       materials[geometry[whichBox].material], &texCoords);
     }
   }
 
   //Update thisRay's position to the position where it hit the volume it intersected.
   thisRay->position = thisRay->position + thisRay->direction*closestDist;
 
-  const float3 rawNormal = aabb_normal_tex_coords(*closestBox, thisRay->position, materials[closestBox->material], texCoords);
-  *normal = (dot(rawNormal, thisRay->direction) < 0)?rawNormal:-rawNormal;
+  *normal = (dot(*normal, thisRay->direction) < 0)?*normal:-*normal;
 
   //Make sure I don't intersect the same volume again.
   thisRay->position += *normal*0.0003f; //sqrt(FLT_EPSILON)
 
-  return closestBox->material;  //TODO: Maybe just return texCoords instead?  Return closestBox->material * 6 in z.
+  return texCoords;
 }
 
 //Trace the path of a single ray through nBounces in a scene of boxs
 void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t* mySeed, const float3 normal,
-                     const float3 texCoords, __global material* struckMaterial, image2d_array_t textures,
+                     const float3 texCoords, /*__global material* struckMaterial,*/ image2d_array_t textures,
                      sampler_t textureSampler)
 {
   //Small angle approximation speeds up processing from 47000 us to 43000 us
@@ -75,39 +92,57 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   thisRay->direction = (1 - isSpecular)*randomDir + isSpecular * reflectDir; //N.B.: isSpecular is always either 0 or 1, so these
                                                                              //      directions should never actually be mixed.
 
-  *lightColor += *maskColor * struckMaterial->emission;
+  //TODO: Emission from a texture for window lights will require a material here
+  /**lightColor += *maskColor * struckMaterial->emission;*/
   *maskColor *= color.xyz * dot(thisRay->direction, normal);
 }
 
-float3 sampleSky(const float3 texCoords, const float3 maskColor, __read_only image2d_array_t textures, sampler_t textureSampler)
+//Sample the sky for a light color and calculate the light accumulated by a ray that hit it.
+//The sky texture can partially occlude the sun according to its alpha channel to simulate the sun
+//behind a cloud.
+float3 sampleSky(const sphere sky, const sphere sun, const float3 sunEmission, const ray thisRay, const float3 texCoords, const float3 maskColor,
+                 __read_only image2d_array_t textures, sampler_t textureSampler)
 {
-  return maskColor * read_imagef(textures, textureSampler, (float4){texCoords, 0.}).xyz;
+  float4 skyColor = read_imagef(textures, textureSampler, (float4){texCoords, 0.});
+  if(sphere_intersect(sun, thisRay) > 0) skyColor.xyz = mix(skyColor.xyz, sunEmission, skyColor.w);
+  return maskColor * skyColor.xyz;
 }
 
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
-                        const unsigned long int nBoxes, __global material* materials, __global aabb* skybox,
-                        const float3 cameraPos, const float3 focalPos, const float3 up, const float3 right,
-                        const int nBounces, __global size_t* seeds, const int iterations, const int nSamplesPerFrame,
-                        __read_only image2d_array_t textures, sampler_t textureSampler)
+                        const unsigned long int nBoxes, __global material* materials, const sphere sky, const sphere sun,
+                        const float3 sunEmission, const float2 groundTexNorm, const camera cam,
+                        const int nBounces, __global size_t* seeds, const int iterations,
+                        const int nSamplesPerFrame, __read_only image2d_array_t textures, sampler_t textureSampler)
 {
   //TODO: Copy geometry into __local memory
 
+  //1 pixel per compute unit
   size_t seed = seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)]; //Keep this in private memory as long as possible
   const int2 pixel = (int2)(get_global_id(0), get_global_id(1));
   
   float4 pixelColor = read_imagef(prev, sampler, pixel)*(1.f-1.f/(float)iterations);
 
-  ray thisRay = generateRay(pixel, cameraPos, focalPos, up, right, get_global_size(0), get_global_size(1));
+  //Simulate a camera
+  ray thisRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1));
 
   //Reuse first intersection before relfection for each sample of this pixel.
-  float3 normal, texCoords, lightColor = {0.f, 0.f, 0.f}, maskColor = {1.f, 1.f, 1.f};
-  long int material = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, &texCoords, skybox);
-  bool hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y); //TODO: Handle the ground with a plane intersection instead of branching.
+  float3 normal, lightColor = {0.f, 0.f, 0.f}, maskColor = {1.f, 1.f, 1.f};
+
+  float3 texCoords = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
+  bool hitSky = (texCoords.z == SKY_TEXTURE);
 
   //For each sample of this pixel
   for(size_t sample = 0; sample < nSamplesPerFrame; ++sample)
   {
-    //For each bounce of this ray around the scene
+    //I don't need to do the first ray intersection again for each sample.
+    //TODO: Redo first ray intersection for each sample anyway to get more
+    //      natural camera jitter and a real lens.
+    //ray localRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1), &seed);
+    ray localRay = thisRay;
+
+    //For each bounce of this ray around the scene.  Stop when I hit the only light source, the sky,
+    //and limit the maximum number of bounces.  Rays that bounce too many times without hitting the
+    //the sky contribute no color.
     for(size_t bounce = 1; bounce < nBounces - 1 && !hitSky; ++bounce)
     {
       //TODO: Sort rays by struck material and process 1 material at a time?
@@ -115,25 +150,20 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
       //      textures.  My performance is already getting killed by the skybox texture.
 
       //Otherwise, scatter this ray off of whatever it hit and intersect the scene again
-      scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material, textures, textureSampler);
-      material = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, &texCoords, skybox);
-
-      //TODO: Intersect a plane for the ground instead of checking normal
-      //      on the skybox.
-      hitSky = (material == skybox->material) && (thisRay.position.y > skybox->center.y - 0.49*skybox->width.y);
+      scatterAndShade(&localRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler);
+      texCoords = intersectScene(&localRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
+      hitSky = (texCoords.z == SKY_TEXTURE);
     }
 
-    //Final shade for this sample
+    //Last shade for this sample
     if(hitSky)
     {
-      //TODO: Emission is hard-coded for now so that skybox material is the floor material.
-      //      Next, I need to look up sky color from hitSky.
-      lightColor += sampleSky(texCoords, maskColor, textures, textureSampler);
-
-      //TODO: Intersect on the sun instead of the skybox?
+      lightColor += sampleSky(sky, sun, sunEmission, localRay, texCoords, maskColor, textures, textureSampler);
     }
-    else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, materials + material, textures, textureSampler);
+    //TODO: scatterAndShade when there are light sources other than the sun
+    //else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler);
   }
+
   pixelColor += (float4){lightColor, 1.f} / (float)(iterations*nSamplesPerFrame);
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame
 

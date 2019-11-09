@@ -4,6 +4,9 @@
 //       compiled with NOT_ON_DEVICE defined.
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+#ifndef VECTOR_H
+#define VECTOR_H
+
 #ifdef NOT_ON_DEVICE
   #include "algebra/vector.h"
   #include <cmath>
@@ -20,7 +23,14 @@
   {
     return vec.norm();
   }
+  template <class VECTOR>
+  float dot(const VECTOR& lhs, const VECTOR& rhs)
+  {
+    return lhs.dot(rhs);
+  }
 #else
   #define CL(type) type
   #define SCALAR(type) type
-#endif //__cplusplus
+#endif //NOT_ON_DEVICE
+
+#endif //VECTOR_H

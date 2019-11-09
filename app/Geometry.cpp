@@ -1,5 +1,5 @@
-//File: CmdLine.cpp
-//Brief: A CmdLine parses the command line for exactly 1 configuration file and converts it into
+//File: Geometry.cpp
+//Brief: A Geometry parses the command line for exactly 1 configuration file and converts it into
 //       a list of materials, a list of aabbs, and a list of CameraModels.  With any other number
 //       of arguments, -h, --help, or a YAML file it can't parse, it throws an exception with
 //       usage information.
@@ -17,10 +17,12 @@
 #include <CL/cl.hpp>
 
 //app includes
-#include "app/CmdLine.h"
+#include "app/Geometry.h"
 
 //serial includes
 #include "serial/aabb.cpp"
+#include "serial/sphere.cpp"
+#include "serial/groundPlane.cpp"
 
 //camera includes
 #include "algebra/YAMLIntegration.h"
@@ -46,8 +48,6 @@
               "\t             the map of materials mentioned above.\n"\
               "\t3) cameras: A map of camera configurations.  Each camera may\n"\
               "\t            have a position and a focal plane position.\n\n"\
-              "\tYou must also specify a node called \"skybox\" after which all\n"\
-              "\trays will be killed\n\n"\
               "\tThis message will be printed if the YAML file cannot be parsed,\n"\
               "\tthere is not exactly 1 argument on the command line, or the sole\n"\
               "\tcommand line argument is -h or --help.\n\n"\
@@ -72,12 +72,27 @@ namespace
 
     return std::distance(existingNames.begin(), found);
   }
+
+  //List the corners of an aabb
+  std::array<cl::float3, 8> corners(const aabb& box)
+  {
+    return {
+             box.center + box.width*0.5f,
+             box.center + cl::float3{ box.width.x, -box.width.y,  box.width.z}*0.5f,
+             box.center + cl::float3{ box.width.x,  box.width.y, -box.width.z}*0.5f,
+             box.center + cl::float3{-box.width.x,  box.width.y,  box.width.z}*0.5f,
+             box.center + cl::float3{-box.width.x,  box.width.y, -box.width.z}*0.5f,
+             box.center + cl::float3{-box.width.x, -box.width.y,  box.width.z}*0.5f,
+             box.center + cl::float3{ box.width.x, -box.width.y, -box.width.z}*0.5f,
+             box.center - box.width*0.5f
+           };
+  }
 }
 
 namespace app
 {
-  //TODO: Move this overload of load() and USAGE to individual applications when CmdLine -> Geometry.
-  YAML::Node CmdLine::load(const int argc, const char** argv)
+  //TODO: Move this overload of load() and USAGE to individual applications when Geometry -> Geometry.
+  YAML::Node Geometry::load(const int argc, const char** argv)
   {
     //argv[0] is always the path to this application.  So, the number of command line arguments is really argc - 1, and
     //I'm going to ignore argv[0].
@@ -89,7 +104,7 @@ namespace app
 
   //TODO: Only print usage information in version that takes argc and argv.
   //      Let exceptions propagate in this version.
-  YAML::Node CmdLine::load(const std::string& fileName)
+  YAML::Node Geometry::load(const std::string& fileName)
   {
     //The document into which I will try to load a YAML file
     YAML::Node document;
@@ -107,6 +122,18 @@ namespace app
       {
         document = YAML::LoadFile(std::string(INSTALL_DIR) + "/include/examples/" + fileName);
       }
+
+      //Read the color of the sun
+      auto sun = document["sun"];
+      fSunEmission = sun["color"].as<cl::float3>(cl::float3{10.f, 8.f, 6.f});
+      //The sun's center will end up in fSky eventually in sendToGPU()
+      fSun.center = sun["center"].as<cl::float3>(cl::float3{0.f, 1.f, 0.f});
+      fSun.radius = sun["radius"].as<float>(0.1);
+
+      //The sky texture and ground textures must be loaded before
+      //any other textures.
+      ::findOrCreate(document["sky"].as<std::string>(), textureNames);
+      ::findOrCreate(document["ground"].as<std::string>(), textureNames);
 
       //Map the YAML configuration file to a geometry to render using a few keywords
       const auto& matMap = document["materials"];
@@ -148,12 +175,7 @@ namespace app
         fBoxes.push_back(newBox);
       }
 
-      const auto skyMaterial = nameToMaterialIndex.find(document["skybox"]["material"].as<std::string>());
-      if(skyMaterial == nameToMaterialIndex.end()) throw exception("Failed to lookup material for the skybox named " + document["skybox"]["material"].as<std::string>());
-      fSkybox = {document["skybox"]["width"].as<cl::float3>().data, document["skybox"]["center"].as<cl::float3>().data,
-                 document["skybox"]["texNorm"].as<cl::float3>(document["skybox"]["width"].as<cl::float3>()).data, skyMaterial->second};
-
-      fFloorY = fSkybox.center.y - fSkybox.width.y/2.;
+      fFloorY = 0;  //The sky dome is always centered at (0, 0, 0)
 
       //Load textures
       //TODO: oneCell has to be updated to use a kernel compatible with textures. 
@@ -202,7 +224,7 @@ namespace app
       const auto& cameraMap = document["cameras"];
       for(const auto& camera: cameraMap)
       {
-        cameras.emplace_back(camera.first.as<std::string>(), eng::CameraModel(camera.second["position"].as<cl::float3>().data, camera.second["focal"].as<cl::float3>().data));
+        cameras.emplace_back(camera.first.as<std::string>(), eng::CameraModel(camera.second["position"].as<cl::float3>().data, camera.second["focal"].as<cl::float3>().data, camera.second["size"].as<float>(1.f)));
       }
     }
     catch(const YAML::Exception& e)
@@ -213,7 +235,7 @@ namespace app
     return document;
   }
 
-  YAML::Node CmdLine::write(const std::string& fileName)
+  YAML::Node Geometry::write(const std::string& fileName)
   {
     //"Invert" the mapping in nameToMaterialIndex
     std::vector<std::string> materialIndexToName(nameToMaterialIndex.size());
@@ -222,6 +244,15 @@ namespace app
     //Serialize the application state.
     YAML::Node newFile;
 
+    //Write sky and ground textures
+    newFile["sky"] = materialIndexToName[0];
+    newFile["ground"] = materialIndexToName[1];
+    auto sun = newFile["sun"];
+    sun["color"] = fSunEmission;
+    sun["position"] = fSun.center;
+    sun["radius"] = fSun.radius;
+
+    //Write out materials
     auto mats = newFile["materials"];
     for(const auto& inMemory: nameToMaterialIndex)
     {
@@ -236,6 +267,7 @@ namespace app
       inFile["back"] = textureNames[fMaterials[inMemory.second].textures.data.s[5]];
     }
 
+    //Write building geometry
     auto geom = newFile["geometry"];
     for(size_t whichBox = 0; whichBox < fBoxes.size(); ++whichBox)
     {
@@ -259,12 +291,7 @@ namespace app
       inFile["texNorm"] = cl::float3(fBoxes[whichBox].texNorm);
     }
 
-    auto sky = newFile["skybox"];
-    sky["width"] = cl::float3(fSkybox.width);
-    sky["center"] = cl::float3(fSkybox.center);
-    sky["material"] = materialIndexToName[fSkybox.material];
-    sky["texNorm"] = cl::float3(fSkybox.texNorm);
-
+    //Save camera states
     auto cams = newFile["cameras"];
     for(const auto& inMemory: cameras)
     {
@@ -280,15 +307,40 @@ namespace app
     return newFile;
   }
 
-  CmdLine::exception::exception(const std::string& why): std::runtime_error(why + "\n\n" + USAGE)
+  Geometry::exception::exception(const std::string& why): std::runtime_error(why + "\n\n" + USAGE)
   {
   }
 
-  void CmdLine::sendToGPU(cl::Context& ctx)
+  void Geometry::sendToGPU(cl::Context& ctx)
   {
+    //Update fSky and fGroundTexNorm to include all buildings.
+    //If this ever becomes slow, I can think of lots of ways to speed it up.
+    //I could imagine an acceleration structure with buildings on the edge
+    //of the skybox that could help with lots of other things too.  I think
+    //this loop would be limited by I/O into L2 cache if I tried to do SIMD
+    //math.
+    //TODO: Keep the apparent size of the sun the same when fSky grows?
+    fSky.radius = 0; //TODO: Minimum sky radius?
+    for(const auto& box: fBoxes)
+    {
+      const auto corners = ::corners(box);
+      for(const auto& corner: corners) fSky.radius = std::max(fSky.radius, corner.mag());
+    }
+
+    #ifndef NDEBUG
+    std::cout << "Set sky radius to " << fSky.radius << "\n";
+    #endif //NDEBUG
+
+    //Force the ground plane to cover the equator of fSky
+    fGroundTexNorm = {fSky.radius, fSky.radius};
+
+    //Force the sun to have a center on fSky
+    const auto sunDir = fSun.center.norm();
+    fSun.center = sunDir * fSky.radius;
+
+    //Synchronize GPU data with the CPU
     fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
-    fDevSkybox = cl::Buffer(ctx, &fSkybox, &fSkybox + 1, false);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, fTextures->name);
     fDevTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fTextures->name);
@@ -296,10 +348,22 @@ namespace app
   }
 
   //Returning std::unique_ptr<> because I couldn't get std::optional<> to do what I want.
-  std::unique_ptr<CmdLine::selected> CmdLine::select(const ray fromCamera)
+  std::unique_ptr<Geometry::selected> Geometry::select(const ray fromCamera)
   {
-    auto found = fBoxes.end();
+    //First, intersect the sky and the ground.  Any box farther than the closer
+    //of these two is not visible.
+    const float groundDist = groundPlane_intersect(fromCamera),
+                skyDist = sphere_intersect(fSky, fromCamera);
     float closest = std::numeric_limits<float>::max();
+    if(groundDist < 0)
+    {
+      if(skyDist > 0) closest = skyDist;
+    }
+    else if(skyDist > 0) closest = std::min(groundDist, skyDist);
+    else closest = groundDist;
+
+    //Find the closest box that is closer than sky/ground if any.
+    auto found = fBoxes.end();
     for(auto box = fBoxes.begin(); box != fBoxes.end(); ++box)
     {
       const auto dist = aabb_intersect(&*box, fromCamera);
@@ -311,20 +375,19 @@ namespace app
     }
 
     //If I couldn't find a box, create one.
-    //I'm assuming that there are no boxes outside fSkybox.
+    //I'm assuming that there are no boxes outside fSky.
     if(found == fBoxes.end())
     {
-      const auto distToSkybox = aabb_intersect(&fSkybox, fromCamera);
-      assert(distToSkybox > 0 && "The user clicked on something outside the skybox!");
-      const auto intersection = fromCamera.position + fromCamera.direction * distToSkybox;
+      const auto intersection = fromCamera.position + fromCamera.direction * closest;
       boxNames.push_back("defaultBox");
       fBoxes.push_back(aabb{cl::float3{0.1, 0.1, 0.1},
                             cl::float3{intersection.x, fFloorY, intersection.z},
                             cl::float3{0.1, 0.1, 0.1},
-                            fBoxes.empty()?fSkybox.material:fBoxes.back().material});
+                            fBoxes.empty()?SKY_TEXTURE:fBoxes.back().material});
       found = std::prev(fBoxes.end());
     }
 
+    //TODO: return a transaction instead
     return std::make_unique<selected>(selected{*found, fMaterials[found->material], boxNames[std::distance(fBoxes.begin(), found)]});
   }
 }

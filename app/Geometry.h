@@ -1,5 +1,5 @@
-//File: CmdLine.h
-//Brief: A CmdLine parses the command line for exactly 1 configuration file and converts it into
+//File: Geometry.h
+//Brief: A Geometry parses the command line for exactly 1 configuration file and converts it into
 //       a list of materials, a list of aabbs, and a list of CameraModels.  With any other number
 //       of arguments, -h, --help, or a YAML file it can't parse, it throws an exception with
 //       usage information.
@@ -22,6 +22,7 @@
 #include "serial/ray.h"
 #include "serial/material.h"
 #include "serial/aabb.h"
+#include "serial/sphere.h"
 
 //camera includes
 #include "camera/CameraModel.h"
@@ -35,11 +36,11 @@
 namespace app
 {
   //TODO: Rename me to something like Geometry and put command line parsing and usage information into a separate function-only header.
-  class CmdLine
+  class Geometry
   {
     public:
       //Create an empty application state.
-      CmdLine() = default;
+      Geometry() = default;
 
       //Serialization and de-serialization
       YAML::Node load(const int argc, const char** argv);
@@ -53,11 +54,15 @@ namespace app
       //Application handles to data on the GPU
       inline const cl::Buffer& materials() const { return fDevMaterials; }
       inline const cl::Buffer& boxes() const { return fDevBoxes; }
-      inline const cl::Buffer& skybox() const { return fDevSkybox; }
+      inline const sphere& sky() const { return fSky; }
+      inline const sphere& sun() const { return fSun; }
+      inline const cl::float2& groundTexNorm() const { return fGroundTexNorm; }
+      inline const cl::float3& sunEmission() const { return fSunEmission; }
       inline const cl::ImageGL& textures() const { return fDevTextures; }
       inline size_t nBoxes() const { return fBoxes.size(); }
 
       //Custom exception class to explain why the command line couldn't be parsed.
+      //TODO: Derive from app::exception?
       class exception: public std::runtime_error
       {
         public:
@@ -76,6 +81,9 @@ namespace app
       //Upload host-side state to the GPU
       void sendToGPU(cl::Context& ctx);
 
+      //TODO: Check whether the mouse is over the sun
+      //bool isOverSun(const ray fromCamera);
+
       //Select the closest aabb intersected by a ray.  If there is
       //no such box, create a new one where this ray intersects fSkybox.
       std::unique_ptr<selected> select(const ray fromCamera);
@@ -92,8 +100,13 @@ namespace app
       //Serialized data that's matched to metadata.  This is a copy of
       //the data on the GPU.
       std::vector<material> fMaterials;
-      std::vector<aabb> fBoxes;
-      aabb fSkybox;
+      std::vector<aabb> fBoxes; //Buildings
+      sphere fSky; //A dome over the city on which to render the sky
+      sphere fSun; //The sun positioned in the sky
+      cl::float3 fSunEmission; //Color of light emitted by the sun
+      cl::float2 fGroundTexNorm; //Convert a position on the ground to
+                                 //texture coordinates.  Should be the
+                                 //size of the ground.
       std::unique_ptr<gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>> fTextures;
 
       //Metadata with references to GPU-ready data
@@ -109,7 +122,6 @@ namespace app
       //Data on the GPU
       cl::Buffer fDevMaterials;
       cl::Buffer fDevBoxes;
-      cl::Buffer fDevSkybox;
       cl::ImageGL fDevTextures;
   };
 }
