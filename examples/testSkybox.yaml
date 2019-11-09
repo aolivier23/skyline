@@ -8,7 +8,9 @@ skyboxSize: &skyboxSize [100., 2., 100.]
 sky: "testSkyTexture.png"
 ground: "testGround.png"
 sun:
-  color: [6., 4., 2.]
+  color: [5., 0., 0.]
+  radius: 0.2
+  center: [1., 0., 0.]
 
 materials:
   boxMaterial:
@@ -35,13 +37,13 @@ geometry:
   #      cache what it learned at runtime here...
   myFirstBox:
     width: [0.1, 0.2, 0.3]
-    center: [-0.5, -0.8, -0.3]
+    center: [-0.5, 0.1, -0.3]
     material: "boxMaterial"
     texNorm: [0.1, 0.2, 0.3]
 
   anotherBox:
     width: [0.3, 0.6, 0.2]
-    center: [0.6, -0.4, -0.1]
+    center: [0.6, 0.3, -0.1]
     material: "marble"
     texNorm: [0.1, 0.1, 0.1]
 
