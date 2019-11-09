@@ -258,7 +258,9 @@ level.
 ##Sky
 
 Currently, I have a skybox.  I was afraid that mapping a texture onto a dome would be too difficult for geometry
-authors (i.e. me).  The ground is also handled with branching right now.
+authors (i.e. me).  The ground is also handled with branching right now.  Sounds like sky boxes are preferred over
+sky domes in rasterization rendering mainly because a dome is a much more complex geometry.  That's not the case
+for me...
 
 - Replace skybox with a sky dome.  Looks like I can get a not-so-horrible mapping of a rectangular texture onto
   a sphere like this: `https://en.wikipedia.org/wiki/UV_mapping`
@@ -274,3 +276,4 @@ authors (i.e. me).  The ground is also handled with branching right now.
   the sky dome so that clouds can partially occlude sunlight.
 - Set sky dome radius based on tallest loaded building on CPU?  sendToGPU() would be a good time to do that.
 - I could map a texture onto the "sun" if I want to simulate the moon instead.
+- Move sun with mouse in builder.  When sun is double-clicked, move sun's center to mouse position on sky dome.
