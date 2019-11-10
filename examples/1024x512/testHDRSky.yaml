@@ -1,0 +1,53 @@
+#Example of what a YAML file for skyline could look like.
+#Basically, just a couple of maps denoted by keywords.
+#Boxes in the world volume and the skybox itself reference
+#the materials map by name rather than by YAML anchor to
+#better reflect the memory hierarchy needed for the GPU.
+skyboxSize: &skyboxSize [100., 2., 100.]
+
+sky: "/home/aolivier/Downloads/small_harbor_02_1k.hdr" #"testSkyTexture.png"
+ground: "1024x512/ground.png"
+sun:
+  color: [10., 8., 6.]
+  radius: 2.0
+  center: [0.70710678, 0.70710678, 0.]
+
+materials:
+  glass:
+    left: "1024x512/glassBuilding.png"
+    right: "1024x512/glassBuilding.png"
+    top: "1024x512/testBuildingRoof.png"
+    bottom: "1024x512/testBuildingRoof.png"
+    front: "1024x512/glassBuilding.png"
+    back: "1024x512/glassBuilding.png"
+    emission: [0., 0., 0.]
+
+  marble:
+    left: "1024x512/MarbleBuilding.png"
+    right: "1024x512/MarbleBuilding.png"
+    top: "1024x512/roof.png"
+    bottom: "1024x512/roof.png"
+    front: "1024x512/MarbleBuilding.png"
+    back: "1024x512/MarbleBuilding.png"
+    emission: [0., 0., 0.]
+  
+geometry:
+  #TODO: Allow more BVH information here?  oneCell will just ignore it
+  #      anyway.  Eventually, some really smart BVH algorithm could
+  #      cache what it learned at runtime here...
+  myFirstBox:
+    width: [0.1, 0.2, 0.3]
+    center: [-0.5, 0.1, -0.3]
+    material: "glass"
+    texNorm: [0.1, 0.2, 0.3]
+
+  anotherBox:
+    width: [0.3, 0.6, 0.2]
+    center: [0.6, 0.3, -0.1]
+    material: "marble"
+    texNorm: [0.1, 0.1, 0.1]
+
+cameras:
+  default:
+    position: [0., 0.2, 0.9]
+    focal: [0., 0.2, 0.0]

@@ -277,3 +277,10 @@ for me...
 - Set sky dome radius based on tallest loaded building on CPU?  sendToGPU() would be a good time to do that.
 - I could map a texture onto the "sun" if I want to simulate the moon instead.
 - Move sun with mouse in builder.  When sun is double-clicked, move sun's center to mouse position on sky dome.
+
+##Where to get sky dome textures
+
+- `stb_image` claims to be able to do something useful with hdr files.
+- Try AutoStitch: http://blog.wolfire.com/2009/02/creating-our-own-skydomes
+- This one seems to be providing HDR files too: https://hdrihaven.com/hdris/
+- Try generating one from a panorama with my phone.

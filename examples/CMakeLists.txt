@@ -1,1 +1,4 @@
-install(FILES firstBoxes.yaml sevenBoxes.yaml testSkybox.yaml testSkyTexture.png testBuildingSides.png testBuildingRoof.png testSkyBlue.png testGround.png MarbleBuilding.png DESTINATION include/examples)
+install(FILES firstBoxes.yaml sevenBoxes.yaml testSkybox.yaml DESTINATION include/examples)
+
+add_subdirectory(800x600)
+add_subdirectory(1024x512)

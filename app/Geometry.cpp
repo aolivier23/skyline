@@ -135,6 +135,11 @@ namespace app
       ::findOrCreate(document["sky"].as<std::string>(), textureNames);
       ::findOrCreate(document["ground"].as<std::string>(), textureNames);
 
+      //Configure the skybox.  It will be automatically adjusted to
+      //fit everything if it turns out to be too small in sendToGPU().
+      fSky.center = cl::float3{0.f, 0.f, 0.f};
+      fSky.radius = document["horizon"].as<float>(10.f);
+
       //Map the YAML configuration file to a geometry to render using a few keywords
       const auto& matMap = document["materials"];
 
@@ -193,6 +198,9 @@ namespace app
         pixels = stbi_load((std::string(INSTALL_DIR) + "/include/examples/" + textureNames[0]).c_str(), &width, &height, &channels, STBI_rgb_alpha);
       }
       if(!pixels) throw exception("Failed to load a texture from " + textureNames[0]);
+      #ifndef NDEBUG
+      std::cout << "First image has a size of " << width << " x " << height << ".\n";
+      #endif
 
       fTextures.reset(new gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>(width, height, textureNames.size()));
       fTextures->insert(0, buildingFormat, pixels);
@@ -213,7 +221,7 @@ namespace app
         if(!pixels) throw exception("Failed to load a texture from " + textureNames[whichFile]);
         if(!fTextures->checkDimensions(width, height))
         {
-          throw exception(textureNames[whichFile] + " has different dimensions from the first texture in this file.  "
+          throw exception(textureNames[whichFile] + " has different dimensions of " + std::to_string(width) + " x " + std::to_string(height) + " from the first texture in this file.  "
                           "All textures must have the same dimensions.");
         }
 
@@ -320,7 +328,6 @@ namespace app
     //this loop would be limited by I/O into L2 cache if I tried to do SIMD
     //math.
     //TODO: Keep the apparent size of the sun the same when fSky grows?
-    fSky.radius = 0; //TODO: Minimum sky radius?
     for(const auto& box: fBoxes)
     {
       const auto corners = ::corners(box);

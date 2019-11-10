@@ -32,5 +32,6 @@ CL(float3) sphere_normal(const sphere shape, const CL(float3) pos)
 //Return texture coordinates for mapping a rectangle onto a hemisphere at pos.
 CL(float3) sphere_tex_coords(const sphere shape, const CL(float3) pos)
 {
-  return (CL(float3)){0.5f + atan2(pos.z, pos.x)/2.f/M_PI, 2.f*acos(pos.y)/M_PI, SKY_TEXTURE};
+  const CL(float3) normal = sphere_normal(shape, pos);
+  return (CL(float3)){0.5f + atan2(normal.z, normal.x)/2.f/M_PI, 0.5 - asin(normal.y)/M_PI, SKY_TEXTURE};
 }
