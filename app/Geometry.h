@@ -110,6 +110,8 @@ namespace app
       std::unique_ptr<gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>> fTextures;
 
       //Metadata with references to GPU-ready data
+      std::string skyTextureFile;
+      std::string groundTextureFile;
       std::map<std::string, int> nameToMaterialIndex;
       std::vector<std::string> boxNames; //I chose to use parallel arrays because I need fBoxes to be tightly packed
                                          //for upload to the GPU.

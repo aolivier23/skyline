@@ -133,7 +133,9 @@ namespace app
       //The sky texture and ground textures must be loaded before
       //any other textures.
       ::findOrCreate(document["sky"].as<std::string>(), textureNames);
+      skyTextureFile = document["sky"].as<std::string>();
       ::findOrCreate(document["ground"].as<std::string>(), textureNames);
+      groundTextureFile = document["ground"].as<std::string>();
 
       //Configure the skybox.  It will be automatically adjusted to
       //fit everything if it turns out to be too small in sendToGPU().
@@ -253,8 +255,8 @@ namespace app
     YAML::Node newFile;
 
     //Write sky and ground textures
-    newFile["sky"] = materialIndexToName[0];
-    newFile["ground"] = materialIndexToName[1];
+    newFile["sky"] = skyTextureFile;
+    newFile["ground"] = groundTextureFile;
     auto sun = newFile["sun"];
     sun["color"] = fSunEmission;
     sun["position"] = fSun.center;
