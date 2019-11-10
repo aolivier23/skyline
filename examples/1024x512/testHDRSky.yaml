@@ -3,8 +3,6 @@
 #Boxes in the world volume and the skybox itself reference
 #the materials map by name rather than by YAML anchor to
 #better reflect the memory hierarchy needed for the GPU.
-skyboxSize: &skyboxSize [100., 2., 100.]
-
 sky: "/home/aolivier/Downloads/small_harbor_02_1k.hdr" #"testSkyTexture.png"
 ground: "1024x512/ground.png"
 sun:
