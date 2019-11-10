@@ -167,10 +167,12 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     //else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler);
   }
 
-  pixelColor += (float4){lightColor, 1.f} / (float)(iterations*nSamplesPerFrame);
+  //Reinhard tonemapping to convert HDR colors to LDR.  Divide by number of iterations after tonemapping for iterative
+  //camera updates when looking at the same scene for a long time.
+  const float4 ldrColor = (float4){lightColor, 1.f};
+  pixelColor += ldrColor/(ldrColor + (float4){1.f, 1.f, 1.f, 0.f}) / (float)(iterations*nSamplesPerFrame);
+
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame
 
-  //write_imagef(pixels, pixel, pow(pixelColor/(pixelColor + (float4){1.f, 1.f, 1.f, 1.f}), 1.f/gamma)); //Gamma and tonemapping
-  //write_imagef(pixels, pixel, pixelColor); //Original
   write_imagef(pixels, pixel, pow(pixelColor, (float4){1.f/gamma, 1.f/gamma, 1.f/gamma, 1.f})); //Gamma correction only
 }
