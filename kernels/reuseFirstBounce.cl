@@ -71,7 +71,7 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
                                                              :(float3)(0.f, -normal.z, normal.y));
   const float3 localYAxis = cross(normal, localXAxis);
 
-  const float4 color = pow(read_imagef(textures, textureSampler, (float4){texCoords, 0.}), gamma);
+  const float4 color = pow(read_imagef(textures, textureSampler, (float4){texCoords, 0.}), (float4){gamma, gamma, gamma, 1.f});
 
   //TODO: Fresnel equation: the fraction of light that is reflected or transmmitted depends on direction.
   //Do specular reflections color.w percent of the time and diffuse otherwise.
@@ -103,9 +103,9 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
 float3 sampleSky(const sphere sky, const sphere sun, const float3 sunEmission, const ray thisRay, const float3 texCoords, const float3 maskColor,
                  __read_only image2d_array_t textures, sampler_t textureSampler, const float gamma)
 {
-  float4 skyColor = pow(read_imagef(textures, textureSampler, (float4){texCoords, 0.}), gamma);
+  float4 skyColor = read_imagef(textures, textureSampler, (float4){texCoords, 0.});
   if(sphere_intersect(sun, thisRay) > 0) skyColor.xyz = mix(skyColor.xyz, sunEmission, skyColor.w);
-  return maskColor * skyColor.xyz;
+  return maskColor * pow(skyColor.xyz, (float3){gamma, gamma, gamma});
 }
 
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
@@ -122,7 +122,8 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   
   const float gamma = 2.2; //TODO: Make this an engine setting
 
-  float4 pixelColor = pow(read_imagef(prev, sampler, pixel)*(1.f-1.f/(float)iterations), gamma);
+  float4 pixelColor = pow(read_imagef(prev, sampler, pixel), (float4){gamma, gamma, gamma, gamma})*(1.f-1.f/(float)iterations); //undo gamma correction
+  //float4 pixelColor = read_imagef(prev, sampler, pixel)*(1.f-1.f/(float)iterations); //Without gamma correction
 
   //Simulate a camera
   ray thisRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1));
@@ -169,5 +170,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   pixelColor += (float4){lightColor, 1.f} / (float)(iterations*nSamplesPerFrame);
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame
 
-  write_imagef(pixels, pixel, pow(pixelColor/(pixelColor + (float4){1.f, 1.f, 1.f, 1.f}), 1.f/gamma));
+  //write_imagef(pixels, pixel, pow(pixelColor/(pixelColor + (float4){1.f, 1.f, 1.f, 1.f}), 1.f/gamma)); //Gamma and tonemapping
+  //write_imagef(pixels, pixel, pixelColor); //Original
+  write_imagef(pixels, pixel, pow(pixelColor, (float4){1.f/gamma, 1.f/gamma, 1.f/gamma, 1.f})); //Gamma correction only
 }
