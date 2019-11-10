@@ -259,7 +259,7 @@ namespace app
     newFile["ground"] = groundTextureFile;
     auto sun = newFile["sun"];
     sun["color"] = fSunEmission;
-    sun["position"] = fSun.center;
+    sun["center"] = fSun.center;
     sun["radius"] = fSun.radius;
 
     //Write out materials

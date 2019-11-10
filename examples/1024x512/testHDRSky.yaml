@@ -8,7 +8,7 @@ ground: "1024x512/ground.png"
 sun:
   color: [100., 80., 60.]
   radius: 2.0
-  center: [0.70710678, 0.70710678, 0.]
+  center: [1., 0.2, 0.]
 
 materials:
   glass:
