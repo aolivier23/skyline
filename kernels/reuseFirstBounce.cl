@@ -61,7 +61,7 @@ float3 intersectScene(ray* thisRay, __global aabb* geometry, __global material* 
 //Trace the path of a single ray through nBounces in a scene of boxs
 void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t* mySeed, const float3 normal,
                      const float3 texCoords, /*__global material* struckMaterial,*/ image2d_array_t textures,
-                     sampler_t textureSampler)
+                     sampler_t textureSampler, const float gamma)
 {
   //Small angle approximation speeds up processing from 47000 us to 43000 us
   const float theta = random(mySeed), phi = 2.f*M_PI*random(mySeed);
@@ -71,7 +71,7 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
                                                              :(float3)(0.f, -normal.z, normal.y));
   const float3 localYAxis = cross(normal, localXAxis);
 
-  const float4 color = read_imagef(textures, textureSampler, (float4){texCoords, 0.});
+  const float4 color = pow(read_imagef(textures, textureSampler, (float4){texCoords, 0.}), gamma);
 
   //TODO: Fresnel equation: the fraction of light that is reflected or transmmitted depends on direction.
   //Do specular reflections color.w percent of the time and diffuse otherwise.
@@ -101,9 +101,9 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
 //The sky texture can partially occlude the sun according to its alpha channel to simulate the sun
 //behind a cloud.
 float3 sampleSky(const sphere sky, const sphere sun, const float3 sunEmission, const ray thisRay, const float3 texCoords, const float3 maskColor,
-                 __read_only image2d_array_t textures, sampler_t textureSampler)
+                 __read_only image2d_array_t textures, sampler_t textureSampler, const float gamma)
 {
-  float4 skyColor = read_imagef(textures, textureSampler, (float4){texCoords, 0.});
+  float4 skyColor = pow(read_imagef(textures, textureSampler, (float4){texCoords, 0.}), gamma);
   if(sphere_intersect(sun, thisRay) > 0) skyColor.xyz = mix(skyColor.xyz, sunEmission, skyColor.w);
   return maskColor * skyColor.xyz;
 }
@@ -120,7 +120,9 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   size_t seed = seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)]; //Keep this in private memory as long as possible
   const int2 pixel = (int2)(get_global_id(0), get_global_id(1));
   
-  float4 pixelColor = read_imagef(prev, sampler, pixel)*(1.f-1.f/(float)iterations);
+  const float gamma = 2.2; //TODO: Make this an engine setting
+
+  float4 pixelColor = pow(read_imagef(prev, sampler, pixel)*(1.f-1.f/(float)iterations), gamma);
 
   //Simulate a camera
   ray thisRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1));
@@ -150,7 +152,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
       //      textures.  My performance is already getting killed by the skybox texture.
 
       //Otherwise, scatter this ray off of whatever it hit and intersect the scene again
-      scatterAndShade(&localRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler);
+      scatterAndShade(&localRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler, gamma);
       texCoords = intersectScene(&localRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
       hitSky = (texCoords.z == SKY_TEXTURE);
     }
@@ -158,7 +160,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     //Last shade for this sample
     if(hitSky)
     {
-      lightColor += sampleSky(sky, sun, sunEmission, localRay, texCoords, maskColor, textures, textureSampler);
+      lightColor += sampleSky(sky, sun, sunEmission, localRay, texCoords, maskColor, textures, textureSampler, gamma);
     }
     //TODO: scatterAndShade when there are light sources other than the sun
     //else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler);
@@ -167,5 +169,5 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   pixelColor += (float4){lightColor, 1.f} / (float)(iterations*nSamplesPerFrame);
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame
 
-  write_imagef(pixels, pixel, pixelColor);
+  write_imagef(pixels, pixel, pow(pixelColor/(pixelColor + (float4){1.f, 1.f, 1.f, 1.f}), 1.f/gamma));
 }

@@ -8,7 +8,7 @@ skyboxSize: &skyboxSize [100., 2., 100.]
 sky: "/home/aolivier/Downloads/small_harbor_02_1k.hdr" #"testSkyTexture.png"
 ground: "1024x512/ground.png"
 sun:
-  color: [10., 8., 6.]
+  color: [100., 80., 60.]
   radius: 2.0
   center: [0.70710678, 0.70710678, 0.]
 
