@@ -226,18 +226,17 @@ level.
   from a TextureArray2D.
 - Instead, I could display new textures on the selected object.  I already have machinery
   to look up the clicked material.
-- I plan to change all objects that use a given material at once.  In the box editor, I'll
-  have a "Clone Material" button to change a box's material.  I guess this would be a good
-  place to select a material as well.
 
 ##TODO
 
-- High Dynamic Range (HDR) colors.  Do they contribute anything, or should I be able to simulate this with some setting related to frame accumulation?
-  learnopengl is a good starting point and makes a first order attempt seem pretty simple.  Basically, I want to increase the normalization of the
-  color of the sun in my example sky texture.
 - I sometimes get a circular pattern of black spots on textures from about 2-3 units
   away.  I think a similar visual artifact was caused by a bad choice for epsilon in
-  gdmlRaytrace.
+  gdmlRaytrace.  I couldn't find the commit in gdmlRaytrace on a first pass.
+- Anything at a z behind the camera's position is a little darker and has weird shadows.  Sounds like some z-dependent
+  part of the reflection algorithm going wrong.
+- A real lens system.  Will be much easier to debug before I reintroduce camera jitter.
+- Camera jitter on the GPU instead of the CPU.  I think it would be a lot less jarring if each pixel shook independently.
+  I think I'm going to lose first intersection reuse when I upgrade my camera model to simulate a lens anyway.
 - Edit/load materials.  Maybe separate options to edit a material itself and
   clone a given box's material.  This probably means asynchronous texture
   loading.  That might work well with the "transaction" model I speculated
@@ -250,10 +249,8 @@ level.
   different texture mapping schemes.  Right now, it looks like texture edges
   aren't getting mapped correctly to the edges of buildings.
 - Emission from texture for window lights in night scenes.  I've left emission as a member variable of material for now.
-- Support higher resolution sky texture in the example and figure out what happened to the sun.
+- Support higher resolution sky texture in the example.
 - Textured inner box for all buildings and do fresnel equations based on "alpha" channel to transmit light into buildings.
-- Camera jitter on the GPU instead of the CPU.  I think it would be a lot less jarring if each pixel shook independently.
-  I think I'm going to lose first intersection reuse when I upgrade my camera model to simulate a lens anyway.
 
 ##Sky
 
