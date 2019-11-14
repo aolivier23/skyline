@@ -58,13 +58,14 @@ float3 intersectScene(ray* thisRay, __global aabb* geometry, __global material* 
   return texCoords;
 }
 
-//Trace the path of a single ray through nBounces in a scene of boxs
+//Trace the path of a single ray through nBounces in a scene of boxes
 void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t* mySeed, const float3 normal,
                      const float3 texCoords, /*__global material* struckMaterial,*/ image2d_array_t textures,
                      sampler_t textureSampler, const float gamma)
 {
-  //Small angle approximation speeds up processing from 47000 us to 43000 us
+  //Small angle approximation speeds up processing
   const float theta = random(mySeed), phi = 2.f*M_PI*random(mySeed);
+
   //I'm doing a cross product with the y axis unless this vector is along the y axis.  So, I know the result without
   //some multiplication by 0 steps that a cross product would imply.
   const float3 localXAxis = normalize((fabs(normal.x) > 0.1f)?(float3)(normal.z, 0.f, -normal.x)
@@ -80,7 +81,7 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   //3 boundary conditions (0 at random = 0, 1.99 at random = 1, and 1 at random = w).  Getting the floating
   //point precision effects correct with that quadratic makes this problem far too challenging compared to
   //what I gain.  I can't even notice the performance difference yet.
-  const bool isSpecular = random(mySeed) < color.w;
+  const bool isSpecular = (random(mySeed) < color.w);
 
   //I should have to normalize randomDir below, but I can show that it doesn't make any difference.  I'm adding 3
   //normal vectors and weighting them with weights that add in quadrature to 1.  The vectors I'm adding form a basis,
@@ -94,6 +95,12 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
 
   //TODO: Emission from a texture for window lights will require a material here
   /**lightColor += *maskColor * struckMaterial->emission;*/
+  //TODO: I'm seeing circles of different colors on the ground plane.  This bug is independent of:
+  //      isSpecular
+  //      texture access for the ground plane
+  //      Using fabs(normal.x) for localXAxis
+  //
+  //      Since blue is the z component of color, it almost seems like maskColor is getting multiplied by position somewhere
   *maskColor *= color.xyz * dot(thisRay->direction, normal);
 }
 
@@ -122,8 +129,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   
   const float gamma = 2.2; //TODO: Make this an engine setting
 
-  float4 pixelColor = pow(read_imagef(prev, sampler, pixel), (float4){gamma, gamma, gamma, gamma})*(1.f-1.f/(float)iterations); //undo gamma correction
-  //float4 pixelColor = read_imagef(prev, sampler, pixel)*(1.f-1.f/(float)iterations); //Without gamma correction
+  float4 pixelColor = pow(read_imagef(prev, sampler, pixel), (float4){gamma, gamma, gamma, 1.f})*(1.f-1.f/(float)iterations); //undo gamma correction
 
   //Simulate a camera
   ray thisRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1));
@@ -131,10 +137,13 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   //Reuse first intersection before relfection for each sample of this pixel.
   float3 normal, lightColor = {0.f, 0.f, 0.f}, maskColor = {1.f, 1.f, 1.f};
 
-  float3 texCoords = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
-  bool hitSky = (texCoords.z == SKY_TEXTURE);
+  const float3 texCoords = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
+  const bool hitSky = (texCoords.z == SKY_TEXTURE);
 
   //For each sample of this pixel
+  //TODO: Using higher samplersPerFrame makes the scene darker and causes a bug where the sun gets intersected first
+  //      after gamma correction and tonemapping updates.  Maybe tonemapping needs to be done each time lightColor
+  //      is updated?
   for(size_t sample = 0; sample < nSamplesPerFrame; ++sample)
   {
     //I don't need to do the first ray intersection again for each sample.
@@ -142,26 +151,28 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     //      natural camera jitter and a real lens.
     //ray localRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1), &seed);
     ray localRay = thisRay;
+    float3 localNormal = normal, localTexCoords = texCoords;
+    bool localHitSky = hitSky;
 
     //For each bounce of this ray around the scene.  Stop when I hit the only light source, the sky,
     //and limit the maximum number of bounces.  Rays that bounce too many times without hitting the
     //the sky contribute no color.
-    for(size_t bounce = 1; bounce < nBounces - 1 && !hitSky; ++bounce)
+    for(size_t bounce = 1; bounce < nBounces && !localHitSky; ++bounce)
     {
       //TODO: Sort rays by struck material and process 1 material at a time?
       //      I might get a lot more milage out of sorting rays when I'm reading from
       //      textures.  My performance is already getting killed by the skybox texture.
 
       //Otherwise, scatter this ray off of whatever it hit and intersect the scene again
-      scatterAndShade(&localRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler, gamma);
-      texCoords = intersectScene(&localRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
-      hitSky = (texCoords.z == SKY_TEXTURE);
+      scatterAndShade(&localRay, &lightColor, &maskColor, &seed, localNormal, localTexCoords, textures, textureSampler, gamma);
+      localTexCoords = intersectScene(&localRay, geometry, materials, nBoxes, &localNormal, groundTexNorm, sky);
+      localHitSky = (localTexCoords.z == SKY_TEXTURE);
     }
 
     //Last shade for this sample
-    if(hitSky)
+    if(localHitSky)
     {
-      lightColor += sampleSky(sky, sun, sunEmission, localRay, texCoords, maskColor, textures, textureSampler, gamma);
+      lightColor += sampleSky(sky, sun, sunEmission, localRay, localTexCoords, maskColor, textures, textureSampler, gamma);
     }
     //TODO: scatterAndShade when there are light sources other than the sun
     //else scatterAndShade(&thisRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler);

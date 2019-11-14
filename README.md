@@ -237,6 +237,9 @@ level.
 - A real lens system.  Will be much easier to debug before I reintroduce camera jitter.
 - Camera jitter on the GPU instead of the CPU.  I think it would be a lot less jarring if each pixel shook independently.
   I think I'm going to lose first intersection reuse when I upgrade my camera model to simulate a lens anyway.
+- A separate texture format for the sky dome.  I want the sky dome to be wider than other images anyway, and it might
+  also be HDR.  According to comments in `stb_image.h`, I need to load HDR images with `stbi_loadf(filename, &x, &y, &n, 0)`
+  instead of `stbi_load()`.  Maybe I won't need to intersect the sun after all with this interface.
 - Edit/load materials.  Maybe separate options to edit a material itself and
   clone a given box's material.  This probably means asynchronous texture
   loading.  That might work well with the "transaction" model I speculated

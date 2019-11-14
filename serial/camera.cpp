@@ -15,7 +15,7 @@ ray generateRay(const camera cam, const CL(int2) pixel, unsigned long int width,
   const float aspectRatio = (float)width / (float)height;
   const CL(float2) ndc = (CL(float2)){(float)pixel.x/(float)width, (float)pixel.y/(float)height};
   const CL(float3) pixelPos = cam.right*(ndc.x - 0.5f)*aspectRatio + cam.up*(ndc.y - 0.5f) + cam.focalPos;
-  thisRay.direction = normalize(pixelPos /** cam.size*/ - thisRay.position); //cam.position.w is the camera len's height
+  thisRay.direction = normalize(pixelPos /** cam.size*/ - thisRay.position);
 
   return thisRay;
 }
