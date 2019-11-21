@@ -114,7 +114,7 @@ int main(const int argc, const char** argv)
   cl::CommandQueue queue(ctx, chosen);
 
   //Create the OpenCL kernel from installed kernels
-  auto program = app::constructSource(ctx, "kernels/reuseFirstBounce.cl",
+  auto program = app::constructSource(ctx, "kernels/skyline.cl",
                                       {"serial/vector.h",
                                        "serial/ray.h",
                                        "serial/material.h",
@@ -209,8 +209,9 @@ int main(const int argc, const char** argv)
           const auto pos = ImGui::GetMousePos();
           //GLFW's pixels have the reverse convention of OpenGL textures in the y direction.  So, I have
           //to flip pos.y before using it with generateRay().
+          size_t seed = 0; //I don't care about what random subpixel jitter I apply here
           const auto fromCamera = generateRay(change.camera().state(), cl::int2{pos.x, abs(pos.y - change.fHeight)},
-                                              change.fWidth, change.fHeight);
+                                              change.fWidth, change.fHeight, &seed);
 
           //TODO: Check whether I'm clicking on the sun
           //TODO: CTRL + click for multi-selection

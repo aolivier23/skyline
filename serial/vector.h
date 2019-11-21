@@ -15,6 +15,7 @@
   #define __global
   #define __local
   #define __private
+  #define __constant
   using std::min;
   using std::max;
   #define FLT_EPSILON CL_FLT_EPSILON

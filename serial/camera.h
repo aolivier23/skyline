@@ -19,6 +19,6 @@ typedef struct camera_tag
   float dummy[3]; //Ensure alignment
 } camera;
 
-ray generateRay(const camera cam, const CL(int2) pixel, unsigned long int width, unsigned long int height);
+ray generateRay(const camera cam, const CL(int2) pixel, unsigned long int width, unsigned long int height, size_t* seed);
 
 #endif //CAMERA_H

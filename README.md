@@ -229,11 +229,6 @@ level.
 
 ##TODO
 
-- I sometimes get a circular pattern of black spots on textures from about 2-3 units
-  away.  I think a similar visual artifact was caused by a bad choice for epsilon in
-  gdmlRaytrace.  I couldn't find the commit in gdmlRaytrace on a first pass.
-- Anything at a z behind the camera's position is a little darker and has weird shadows.  Sounds like some z-dependent
-  part of the reflection algorithm going wrong.
 - A real lens system.  Will be much easier to debug before I reintroduce camera jitter.
 - Camera jitter on the GPU instead of the CPU.  I think it would be a lot less jarring if each pixel shook independently.
   I think I'm going to lose first intersection reuse when I upgrade my camera model to simulate a lens anyway.
