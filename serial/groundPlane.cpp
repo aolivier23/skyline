@@ -16,7 +16,7 @@ float groundPlane_intersect(const ray thisRay)
 //Normal at a point on a plane
 CL(float3) groundPlane_normal(const CL(float3) pos)
 {
-  return (CL(float3)){0., 0., 1.};
+  return (CL(float3)){0., 1., 0.};
 }
 
 //Coordinates into a rectangular texture on this plane.

@@ -135,13 +135,14 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   ray thisRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1));
 
   //Reuse first intersection before relfection for each sample of this pixel.
+  //TODO: Should maskColor be reset for each iteration too?
   float3 normal, lightColor = {0.f, 0.f, 0.f}, maskColor = {1.f, 1.f, 1.f};
 
   const float3 texCoords = intersectScene(&thisRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
   const bool hitSky = (texCoords.z == SKY_TEXTURE);
 
   //For each sample of this pixel
-  //TODO: Using higher samplersPerFrame makes the scene darker and causes a bug where the sun gets intersected first
+  //TODO: Using higher samplersPerFrame makes the scene darker
   //      after gamma correction and tonemapping updates.  Maybe tonemapping needs to be done each time lightColor
   //      is updated?
   for(size_t sample = 0; sample < nSamplesPerFrame; ++sample)
