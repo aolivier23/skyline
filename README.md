@@ -141,8 +141,22 @@ level.
 - Doesn't need to update every frame.  Buffer if necessary.
 - Data per cell: number entering rays, number intersections, camera position, ray start
   positions?
-- Optimize per frame or per bounce?  Seems like former will be a handul, but automating
+- Optimize per frame or per bounce?  Seems like former will be a handful, but automating
   latter could be really cool.
+
+###Details
+
+- Key assumption: I'm already inside a square/cube -> just test for closest boundary.  This is a 1D
+                  test that I might be able to turn into vector math and truncate to get branchless
+                  neighbor lookup for the next node to visit.
+- A block/node just needs to include all volumes that could be inside it.  With an intermediate layer of indices, this could let me put the same building/model into multiple BVH nodes.
+- It at first seems possible to have nodes with different sizes.  I'd simulate them as multiple nodes with the same volumes.  However, I have to come up with a way to skip all of the other nodes that represent the same area of space when leaving that area.
+- If I can write the next cell to intersect with a modulus, I don't think I have to worry about a 1:1 mapping between cell sides and neighboring cells.
+- Seems like I don't gain anything with multiple levels of BVH depth at all when I'm using a grid.  I never test each grid cell to determine whether a ray intersects it.  I figure out from the current grid cell how a ray leaves it.
+- Children need to be contiguous in memory for old BVH child scheme.  Thus, optimizing BVH -> rearranging geometry on the GPU potentially.
+- Eventually: Do subdivisions of nodes improve performance substantially?  Maybe BVH depth should be a kernel parameter?  What do I gain for
+              the added complexity of variable BVH depth?
+- Eventual goal: 3D BVH to account for heights of buidlings
 
 ##Selection Algorithm
 
@@ -230,8 +244,6 @@ level.
 ##TODO
 
 - A real lens system.  Will be much easier to debug before I reintroduce camera jitter.
-- Camera jitter on the GPU instead of the CPU.  I think it would be a lot less jarring if each pixel shook independently.
-  I think I'm going to lose first intersection reuse when I upgrade my camera model to simulate a lens anyway.
 - A separate texture format for the sky dome.  I want the sky dome to be wider than other images anyway, and it might
   also be HDR.  According to comments in `stb_image.h`, I need to load HDR images with `stbi_loadf(filename, &x, &y, &n, 0)`
   instead of `stbi_load()`.  Maybe I won't need to intersect the sun after all with this interface.
@@ -249,6 +261,8 @@ level.
 - Emission from texture for window lights in night scenes.  I've left emission as a member variable of material for now.
 - Support higher resolution sky texture in the example.
 - Textured inner box for all buildings and do fresnel equations based on "alpha" channel to transmit light into buildings.
+- I'm still seeing a circle pattern in sampled textures from far away.  Is this a bug in normal vectors for boxes?  Do I
+  need a larger epsilon for my box calculations?
 
 ##Sky
 
