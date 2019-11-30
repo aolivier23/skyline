@@ -60,7 +60,31 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
 
     //Calculate the next grid cell to test
     if(!hitSomething) *whichGridCell = nextCell(gridSize, *thisRay, *whichGridCell);
+    //hitSomething = true; //TODO: This line shows only objects in the camera's current cell.  It proves that objects are being assigned to
+                           //      the wrong grid cell.
   }
+
+  //TODO: Grid test is giving unexpected results right now.  This loop checks that all buildings are at least present in the grid.
+  //      Remove me when the problem is solved.
+  /*for(int xCell = 0; xCell < gridSize.max.x; ++xCell)
+  {
+    for(int yCell = 0; yCell < gridSize.max.y; ++yCell)
+    {
+      //Intersect boxes in this grid cell if any
+      const int index = xCell + yCell * gridSize.max.x;
+      for(size_t whichIndex = cells[index].begin; whichIndex < cells[index].end; ++whichIndex)
+      {
+        const int whichBox = boxIndices[whichIndex];
+        const float dist = aabb_intersect(geometry + whichBox, *thisRay);
+        if(dist > 0 && dist < closestDist)
+        {
+          closestDist = dist;
+          *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
+                                           materials[geometry[whichBox].material], &texCoords);
+        }
+      }
+    }
+  }*/
 
   //Update thisRay's position to the position where it hit the volume it intersected.
   thisRay->position = thisRay->position + thisRay->direction*closestDist;

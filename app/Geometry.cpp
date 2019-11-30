@@ -109,18 +109,6 @@ namespace
 
     return result;
   }
-
-  //Search a gridCell for a particular index
-  bool searchForIndex(const gridCell cell, const std::vector<int> indices, const int boxToFind)
-  {
-    for(int whichIndex = cell.begin; whichIndex < cell.end; ++whichIndex)
-    {
-      assert(whichIndex < (int)indices.size() && "Tried to access out-of-bounds index");
-      if(indices[whichIndex] == boxToFind) return true;
-    }
-
-    return false;
-  }
 }
 
 namespace app
@@ -384,43 +372,40 @@ namespace app
                           //      I could try iterating over the loop below.
 
     size.cellSize = {(max.x - size.origin.x + epsilon)/nCells, (max.z - size.origin.y + epsilon)/nCells};
+    std::cout << "cellSize is " << size.cellSize << "\n"; //TODO: Remove me
     size.max = {nCells, nCells};
-    std::vector<gridCell> cells(size.max.x * size.max.y, {0, 0}); //size.max has number of cells along each grid dimension.  The "y" grid dimension
-                                                                  //really maps to z in global coordinates, and I refer to it in kernels as size.max.v.
 
-    //Then, group boxes into cells, updating boxIndices as I go.
+    //Next, group boxes into cells.  The std::set<> makes sure each box can be in each cell only once.
+    std::vector<std::set<int>> boxesInEachCell(size.max.x * size.max.y);
     for(int whichBox = 0; whichBox < (int)boxes.size(); ++whichBox)
     {
       //Put boxes[whichBox] into cells based on each of its corners.
       //If multiple corners are in the same box, I only want to add
       //one copy of whichBox (this should be a common case).
-      for(const auto corner: ::corners(boxes[whichBox]))
+      for(const auto corner: corners(boxes[whichBox]))
       {
         const auto diff = corner - min;
         const int xCell = diff.x/size.cellSize.x, yCell = diff.z/size.cellSize.y,
                   whichCell = xCell + yCell*size.max.x; //See comments about size.max.y above
-        if(xCell >= size.max.x) std::cout << "xCell = " << xCell << " at corner " << corner << " with max = " << max << " is too large!\n";
+                                                                                                                                                
+        //Check for logic errors only in debug builds
         assert(xCell < size.max.x && "Got a corner outside of size.max.x!  Grid construction failed.");
         assert(yCell < size.max.y && "Got a corner outside of size.max.y!  Grid construction failed.");
-        assert(whichCell < (int)cells.size() && "Corner is inside of size.max, but I got an invalid cell somehow!  Grid construction failed.");
+        assert(whichCell < (int)boxesInEachCell.size() && "Corner is inside of size.max, but I got an invalid cell somehow!  Grid construction failed.");
         assert(whichCell >= 0 && "Corner is before the first grid cell somehow!  Grid construction failed.");
 
-        if(!searchForIndex(cells[whichCell], boxIndices, whichBox))
-        {
-          boxIndices.push_back(whichBox);
-          ++cells[whichCell].end;
-          assert(cells[whichCell].end > cells[whichCell].begin
-                 && "Got a cell whose first element is after its last element during grid construction!");
-
-          //All gridCells after this one need to have their begin and end members incremented.
-          //TODO: This seems inefficient
-          for(int afterCell = whichCell + 1; afterCell < (int)cells.size(); ++afterCell)
-          {
-            ++cells[afterCell].begin;
-            ++cells[afterCell].end;
-          }
-        }
+        boxesInEachCell[whichCell].insert(whichBox);
       }
+    }
+
+    //Then, put boxes into contiguous memory.  Create a record of where this memory is in
+    //each gridCell so that I can find it later on the GPU.
+    std::vector<gridCell> cells(boxesInEachCell.size());
+    for(size_t whichCell = 0; whichCell < boxesInEachCell.size(); ++whichCell)
+    {
+      cells[whichCell].begin = boxIndices.size();
+      boxIndices.insert(boxIndices.end(), boxesInEachCell[whichCell].begin(), boxesInEachCell[whichCell].end());
+      cells[whichCell].end = boxIndices.size();
     }
 
     return std::make_tuple(size, cells, boxIndices);
