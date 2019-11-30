@@ -23,6 +23,8 @@
 #include "serial/material.h"
 #include "serial/aabb.h"
 #include "serial/sphere.h"
+#include "serial/grid.h"
+#include "serial/gridCell.h"
 
 //camera includes
 #include "camera/CameraModel.h"
@@ -60,6 +62,9 @@ namespace app
       inline const cl::float3& sunEmission() const { return fSunEmission; }
       inline const cl::ImageGL& textures() const { return fDevTextures; }
       inline size_t nBoxes() const { return fBoxes.size(); }
+      inline const grid& gridSize() const { return fGridSize; }
+      inline const cl::Buffer& gridCells() const { return fGridCells; }
+      inline const cl::Buffer& gridIndices() const { return fGridIndices; }
 
       //Custom exception class to explain why the command line couldn't be parsed.
       //TODO: Derive from app::exception?
@@ -103,6 +108,7 @@ namespace app
       std::vector<aabb> fBoxes; //Buildings
       sphere fSky; //A dome over the city on which to render the sky
       sphere fSun; //The sun positioned in the sky
+      grid fGridSize; //Parameters for the grid acceleration structure
       cl::float3 fSunEmission; //Color of light emitted by the sun
       cl::float2 fGroundTexNorm; //Convert a position on the ground to
                                  //texture coordinates.  Should be the
@@ -125,6 +131,14 @@ namespace app
       cl::Buffer fDevMaterials;
       cl::Buffer fDevBoxes;
       cl::ImageGL fDevTextures;
+      cl::Buffer fGridCells;
+      cl::Buffer fGridIndices;
+
+      //Helper functions
+      //Group a collection of boxes into 2D gridCells.  Returns the grid's size, the gridCells, and
+      //the indices into the box collection that are sorted to be compatible with the container of
+      //gridCells.
+      std::tuple<grid, std::vector<gridCell>, std::vector<int>> buildGrid(const std::vector<aabb>& boxes);
   };
 }
 

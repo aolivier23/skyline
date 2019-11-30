@@ -33,5 +33,5 @@ CL(float3) sphere_normal(const sphere shape, const CL(float3) pos)
 CL(float3) sphere_tex_coords(const sphere shape, const CL(float3) pos)
 {
   const CL(float3) normal = sphere_normal(shape, pos);
-  return (CL(float3)){0.5f + atan2(normal.z, normal.x)/2.f/M_PI, 0.5 - asin(normal.y)/M_PI, SKY_TEXTURE};
+  return (CL(float3)){0.5f + (float)atan2(normal.z, normal.x)/2.f/(float)M_PI, 0.5f - (float)asin(normal.y)/(float)M_PI, SKY_TEXTURE};
 }

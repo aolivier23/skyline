@@ -186,6 +186,12 @@ namespace cl
       {
       }
 
+      //Unary negation
+      vector<TYPE, SIZE, BASE_TYPE>operator -() const
+      {
+        return ::For<BASE_TYPE, SIZE, SIZE-1>::each(data, [](const auto& value) { return -value; });
+      }
+
       //Multiplication by a scalar
       vector<TYPE, SIZE, BASE_TYPE>operator *(const TYPE scalar) const
       {
@@ -212,6 +218,12 @@ namespace cl
       vector<TYPE, SIZE, BASE_TYPE>operator *(const vector<TYPE, SIZE, BASE_TYPE>& other) const
       {
         return ::For<BASE_TYPE, SIZE, SIZE-1>::each(data, other.data, [](const auto& lhs, const auto& rhs) { return lhs * rhs; });
+      }
+
+      //Component-wise division al a OpenCL C
+      vector<TYPE, SIZE, BASE_TYPE>operator /(const vector<TYPE, SIZE, BASE_TYPE>& other) const
+      {
+        return ::For<BASE_TYPE, SIZE, SIZE-1>::each(data, other.data, [](const auto& lhs, const auto& rhs) { return lhs / rhs; });
       }
 
       //Perform operations that modify this vector in place
@@ -320,6 +332,12 @@ namespace cl
       template <class ...ARGS>
       vector(ARGS... args): vector({args...})
       {
+      }
+
+      //Unary negation
+      vector<TYPE, 2, BASE_TYPE>operator -() const
+      {
+        return ::For<BASE_TYPE, 2, 2-1>::each(data, [](const auto& value) { return -value; });
       }
 
       //Multiplication by a scalar

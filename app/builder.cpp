@@ -62,213 +62,226 @@ namespace
 
 int main(const int argc, const char** argv)
 {
-  //Set up OpenGL context via GLFW
-  if(!glfwInit())
+  try //Look for OpenCL errors in the whole program and print error codes for lookup
   {
-    std::cerr << "Failed to initialize GLFW for window system with OpenGL context!  There's nothing I"
-              << " can do to recover, so returning with an error.\n";
-    return SETUP_ERROR;
-  }
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  #if __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  #endif
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-  auto window = glfwCreateWindow(800, 600, "HelloCL", nullptr, nullptr);
-  if(window == nullptr)
-  {
-    std::cerr << "I managed to initialize GLFW, but I couldn't create a window with an OpenGL context."
-              << "  There's nothing I can do, so returning with an error.\n";
-    return SETUP_ERROR;
-  }
-
-  glfwMakeContextCurrent(window);
-
-  //Initialize glad to get opengl extensions.  
-  gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-  if(!gladLoadGL())
-  {
-    std::cerr << "Failed to load OpenGL functions with GLAD.  I won't be able to render anything, so"
-              << " returning an error.\n";
-    return SETUP_ERROR;
-  }
-
-  //Parse the command line for a configuration file.
-  //This de-serializes the geometry to render and camera configurations.
-  app::Geometry geom;
-
-  try
-  {
-    geom.load(argc, argv);
-  }
-  catch(const app::Geometry::exception& e)
-  {
-    std::cerr << e.what();
-    return CMD_LINE_ERROR;
-  }
-
-  //Get the first GPU device among all platforms that matches the current OpenGL context
-  auto [ctx, chosen] = app::chooseDevice(window);
-  cl::CommandQueue queue(ctx, chosen);
-
-  //Create the OpenCL kernel from installed kernels
-  auto program = app::constructSource(ctx, "kernels/skyline.cl",
-                                      {"serial/vector.h",
-                                       "serial/ray.h",
-                                       "serial/material.h",
-                                       "serial/aabb.h",
-                                       "serial/aabb.cpp",
-                                       "serial/sphere.h",
-                                       "serial/sphere.cpp",
-                                       "serial/groundPlane.h",
-                                       "serial/groundPlane.cpp",
-                                       "kernels/linearCongruential.cl",
-                                       "serial/camera.h",
-                                       "serial/camera.cpp"
-                                      });
-
-  //Build OpenCL program
-  try
-  {
-    program.build();
-  }
-  catch(const cl::Error& e)
-  {
-    const auto status = program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(chosen);
-    if(status == CL_BUILD_ERROR)
+    //Set up OpenGL context via GLFW
+    if(!glfwInit())
     {
-      const auto name = chosen.getInfo<CL_DEVICE_NAME>();
-      const auto log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(chosen);
-      std::cerr << "The program for device " << name << " failed because:\n" << log << "\n";
+      std::cerr << "Failed to initialize GLFW for window system with OpenGL context!  There's nothing I"
+                << " can do to recover, so returning with an error.\n";
       return SETUP_ERROR;
     }
-    
-    std::cerr << "Got unrecognized error when building OpenCL program: " << e.err() << ": " << e.what() << "\n";
-    return SETUP_ERROR;
-  }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    #if __APPLE__
+      glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    auto window = glfwCreateWindow(800, 600, "HelloCL", nullptr, nullptr);
+    if(window == nullptr)
+    {
+      std::cerr << "I managed to initialize GLFW, but I couldn't create a window with an OpenGL context."
+                << "  There's nothing I can do, so returning with an error.\n";
+      return SETUP_ERROR;
+    }
 
-  auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, size_t, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
+    glfwMakeContextCurrent(window);
 
-  //Set up viewport
-  int width, height;
-  glfwGetFramebufferSize(window, &width, &height);
+    //Initialize glad to get opengl extensions.  
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    if(!gladLoadGL())
+    {
+      std::cerr << "Failed to load OpenGL functions with GLAD.  I won't be able to render anything, so"
+                << " returning an error.\n";
+      return SETUP_ERROR;
+    }
 
-  //Set up "engine" that manages user interaction and exposes result through
-  //public member functions.
-  double initX = 0., initY = 0.;
-  glfwGetCursorPos(window, &initX, &initY);
-  eng::WithRandomSeeds change(window, ctx,
-                              std::make_unique<eng::FPSController>(geom.cameras.front().second, 0.05, 0.02, initX, initY));
+    //Parse the command line for a configuration file.
+    //This de-serializes the geometry to render and camera configurations.
+    app::Geometry geom;
 
-  //Set up Dear ImGui
-  //N.B.: This has to happen after changeWithWindowSize is constructed to override the GLFW keyboard handler.
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  auto& io = ImGui::GetIO();
-
-  ImGui::StyleColorsDark();
-
-  ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplOpenGL3_Init("#version 420");
-
-  //Set up geometry to send to the GPU.  It was read in from the command line in a file.
-  geom.sendToGPU(ctx);
-  cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST),
-              textureSampler(ctx, true, CL_ADDRESS_REPEAT, CL_FILTER_LINEAR);
-
-  //Selection state
-  std::unique_ptr<app::Geometry::selected> selection;
-
-  //Render loop that calls OpenCL kernel
-  while(!glfwWindowShouldClose(window))
-  {
-    //Set up Dear ImGui
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    //Run the skyline engine
     try
     {
-      std::vector<cl::Memory> mem = {*(change.glImage), geom.textures()};
-      queue.enqueueAcquireGLObjects(&mem);
-      pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)),
-                *(change.glImage), sampler, *(change.clImage),
-                geom.boxes(), geom.nBoxes(), geom.materials(),
-                geom.sky(), geom.sun(), geom.sunEmission().data,
-                geom.groundTexNorm().data, change.camera().state(),
-                change.nBounces(), change.seeds(), ++change.nIterations(),
-                change.nSamples(), geom.textures(), textureSampler);
+      geom.load(argc, argv);
+    }
+    catch(const app::Geometry::exception& e)
+    {
+      std::cerr << e.what();
+      return CMD_LINE_ERROR;
+    }
 
-      if(!io.WantCaptureMouse)
-      {
-        if(ImGui::IsMouseDoubleClicked(0))
-        {
-          const auto pos = ImGui::GetMousePos();
-          //GLFW's pixels have the reverse convention of OpenGL textures in the y direction.  So, I have
-          //to flip pos.y before using it with generateRay().
-          size_t seed = 0; //I don't care about what random subpixel jitter I apply here
-          const auto fromCamera = generateRay(change.camera().state(), cl::int2{pos.x, abs(pos.y - change.fHeight)},
-                                              change.fWidth, change.fHeight, &seed);
+    //Get the first GPU device among all platforms that matches the current OpenGL context
+    auto [ctx, chosen] = app::chooseDevice(window);
+    cl::CommandQueue queue(ctx, chosen);
 
-          //TODO: Check whether I'm clicking on the sun
-          //TODO: CTRL + click for multi-selection
-          selection = std::move(geom.select(fromCamera));
+    //Create the OpenCL kernel from installed kernels
+    auto program = app::constructSource(ctx, "kernels/skyline.cl",
+                                        {"serial/vector.h",
+                                         "serial/ray.h",
+                                         "serial/material.h",
+                                         "serial/aabb.h",
+                                         "serial/aabb.cpp",
+                                         "serial/sphere.h",
+                                         "serial/sphere.cpp",
+                                         "serial/groundPlane.h",
+                                         "serial/groundPlane.cpp",
+                                         "serial/grid.h",
+                                         "serial/grid.cpp",
+                                         "serial/gridCell.h",
+                                         "serial/gridCell.cpp",
+                                         "kernels/linearCongruential.cl",
+                                         "serial/camera.h",
+                                         "serial/camera.cpp"
+                                        });
 
-          geom.sendToGPU(ctx);
-          change.onCameraChange();
-        }
-        else app::handleCamera(change, io);
-      }
-
-      //Draw GUI while kernel is running
-      if(ImGui::BeginMainMenuBar())
-      {
-        if(app::drawFile(geom))
-        {
-          geom.sendToGPU(ctx);
-          change.onCameraChange();
-        }
-        //TODO: edit menu with materials and skybox options
-        app::drawCameras(geom, change);
-        app::drawMetrics(io);
-        app::drawHelp();
-        if(app::drawEngine(change)) change.onCameraChange();
-        ImGui::EndMainMenuBar();
-
-        if(selection)
-        {
-          if(app::editBox(selection, geom))
-          {
-            //Only update GPU data if something changed.
-            geom.sendToGPU(ctx);
-            change.onCameraChange();
-          }
-
-          //TODO: Material editor logic.  Maybe good enough to just pass change and app into editBox()?  Make sure to put it in the if above.
-        }
-      }
-
-      queue.finish();
-      queue.enqueueReleaseGLObjects(&mem);
+    //Build OpenCL program
+    try
+    {
+      program.build();
     }
     catch(const cl::Error& e)
     {
-      std::cerr << "Caught an OpenCL error while running kernel for drawing:\n" << e.err() << ": " << e.what() << "\n";
-      return RENDER_ERROR;
+      const auto status = program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(chosen);
+      if(status == CL_BUILD_ERROR)
+      {
+        const auto name = chosen.getInfo<CL_DEVICE_NAME>();
+        const auto log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(chosen);
+        std::cerr << "The program for device " << name << " failed because:\n" << log << "\n";
+        return SETUP_ERROR;
+      }
+      
+      std::cerr << "Got unrecognized error when building OpenCL program: " << e.err() << ": " << e.what() << "\n";
+      return SETUP_ERROR;
     }
 
-    change.render(queue);
+    auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, cl::Buffer, cl::Buffer, grid, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
 
-    //Render DearImGui
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    //Set up viewport
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
 
-    glfwSwapBuffers(window);
-    glfwPollEvents(); //TODO: This could cause the old OpenCL buffer to be thrown away.  Then, I'll be copying uninitialized memory
-                      //      on the next frame.
+    //Set up "engine" that manages user interaction and exposes result through
+    //public member functions.
+    double initX = 0., initY = 0.;
+    glfwGetCursorPos(window, &initX, &initY);
+    eng::WithRandomSeeds change(window, ctx,
+                                std::make_unique<eng::FPSController>(geom.cameras.front().second, 0.05, 0.02, initX, initY));
+
+    //Set up Dear ImGui
+    //N.B.: This has to happen after changeWithWindowSize is constructed to override the GLFW keyboard handler.
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    auto& io = ImGui::GetIO();
+
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 420");
+
+    //Set up geometry to send to the GPU.  It was read in from the command line in a file.
+    geom.sendToGPU(ctx);
+    cl::Sampler sampler(ctx, false, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST),
+                textureSampler(ctx, true, CL_ADDRESS_REPEAT, CL_FILTER_LINEAR);
+
+    //Selection state
+    std::unique_ptr<app::Geometry::selected> selection;
+
+    //Render loop that calls OpenCL kernel
+    while(!glfwWindowShouldClose(window))
+    {
+      //Set up Dear ImGui
+      ImGui_ImplOpenGL3_NewFrame();
+      ImGui_ImplGlfw_NewFrame();
+      ImGui::NewFrame();
+
+      //Run the skyline engine
+      try
+      {
+        std::vector<cl::Memory> mem = {*(change.glImage), geom.textures()};
+        queue.enqueueAcquireGLObjects(&mem);
+        pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)),
+                  *(change.glImage), sampler, *(change.clImage),
+                  geom.boxes(), geom.gridIndices(), geom.gridCells(),
+                  geom.gridSize(), geom.materials(),
+                  geom.sky(), geom.sun(), geom.sunEmission().data,
+                  geom.groundTexNorm().data, change.camera().state(),
+                  change.nBounces(), change.seeds(), ++change.nIterations(),
+                  change.nSamples(), geom.textures(), textureSampler);
+
+        if(!io.WantCaptureMouse)
+        {
+          if(ImGui::IsMouseDoubleClicked(0))
+          {
+            const auto pos = ImGui::GetMousePos();
+            //GLFW's pixels have the reverse convention of OpenGL textures in the y direction.  So, I have
+            //to flip pos.y before using it with generateRay().
+            size_t seed = 0; //I don't care about what random subpixel jitter I apply here
+            const auto fromCamera = generateRay(change.camera().state(), cl::int2{pos.x, abs(pos.y - change.fHeight)},
+                                                change.fWidth, change.fHeight, &seed);
+
+            //TODO: Check whether I'm clicking on the sun
+            //TODO: CTRL + click for multi-selection
+            selection = std::move(geom.select(fromCamera));
+
+            geom.sendToGPU(ctx);
+            change.onCameraChange();
+          }
+          else app::handleCamera(change, io);
+        }
+
+        //Draw GUI while kernel is running
+        if(ImGui::BeginMainMenuBar())
+        {
+          if(app::drawFile(geom))
+          {
+            geom.sendToGPU(ctx);
+            change.onCameraChange();
+          }
+          //TODO: edit menu with materials and skybox options
+          app::drawCameras(geom, change);
+          app::drawMetrics(io);
+          app::drawHelp();
+          if(app::drawEngine(change)) change.onCameraChange();
+          ImGui::EndMainMenuBar();
+
+          if(selection)
+          {
+            if(app::editBox(selection, geom))
+            {
+              //Only update GPU data if something changed.
+              geom.sendToGPU(ctx);
+              change.onCameraChange();
+            }
+
+            //TODO: Material editor logic.  Maybe good enough to just pass change and app into editBox()?  Make sure to put it in the if above.
+          }
+        }
+
+        queue.finish();
+        queue.enqueueReleaseGLObjects(&mem);
+      }
+      catch(const cl::Error& e)
+      {
+        std::cerr << "Caught an OpenCL error while running kernel for drawing:\n" << e.err() << ": " << e.what() << "\n";
+        return RENDER_ERROR;
+      }
+
+      change.render(queue);
+
+      //Render DearImGui
+      ImGui::Render();
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+      glfwSwapBuffers(window);
+      glfwPollEvents(); //TODO: This could cause the old OpenCL buffer to be thrown away.  Then, I'll be copying uninitialized memory
+                        //      on the next frame.
+    }
+  }
+  catch(const cl::Error& e)
+  {
+    std::cerr << "Caught an OpenCL error somewhere outside of program building and kernel running:\n" << e.err() << ": " << e.what() << "\n";
+    return SETUP_ERROR;
   }
 
   ImGui_ImplOpenGL3_Shutdown();

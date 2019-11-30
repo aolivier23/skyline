@@ -87,6 +87,40 @@ namespace
              box.center - box.width*0.5f
            };
   }
+
+  //Construct a vector of the minimum component in each dimension of two vectors
+  cl::float3 vecMin(const cl::float3 lhs, const cl::float3 rhs)
+  {
+    cl::float3 result;
+    result.x = std::min(lhs.x, rhs.x);
+    result.y = std::min(lhs.y, rhs.y);
+    result.z = std::min(lhs.z, rhs.z);
+
+    return result;
+  }
+
+  //Construct a vector of the maximum component in each dimension of two vectors
+  cl::float3 vecMax(const cl::float3 lhs, const cl::float3 rhs)
+  {
+    cl::float3 result;
+    result.x = std::max(lhs.x, rhs.x);
+    result.y = std::max(lhs.y, rhs.y);
+    result.z = std::max(lhs.z, rhs.z);
+
+    return result;
+  }
+
+  //Search a gridCell for a particular index
+  bool searchForIndex(const gridCell cell, const std::vector<int> indices, const int boxToFind)
+  {
+    for(int whichIndex = cell.begin; whichIndex < cell.end; ++whichIndex)
+    {
+      assert(whichIndex < (int)indices.size() && "Tried to access out-of-bounds index");
+      if(indices[whichIndex] == boxToFind) return true;
+    }
+
+    return false;
+  }
 }
 
 namespace app
@@ -321,6 +355,77 @@ namespace app
   {
   }
 
+  //Group a collection of boxes into 2D gridCells.  Returns the grid's size, the gridCells, and
+  //the indices into the box collection that are sorted to be compatible with the container of
+  //gridCells.
+  std::tuple<grid, std::vector<gridCell>, std::vector<int>> Geometry::buildGrid(const std::vector<aabb>& boxes)
+  {
+    grid size;
+    std::vector<int> boxIndices;
+
+    //First, choose size: origin, max, and cellSize.  I could choose origin and max * cellSize
+    //by looking at a 2D bounding area for boxes.  cellSize should be optimized somehow to maximize
+    //performance.  Maybe I could start with a minimum or maximum number of boxes per cell.
+    //Eventually, this could be a good opportunity for real-time optimization.
+    cl::float3 min = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()}, max = -min;
+    for(const auto& box: boxes)
+    {
+      for(const auto corner: ::corners(box))
+      {
+        min = ::vecMin(min, corner);
+        max = ::vecMax(max, corner);
+      }
+    }
+
+    constexpr float epsilon = 0.1; //Make the grid a little bigger than it needs to be so that all volumes unambiguously fit inside it.
+    size.origin = {min.x - epsilon, min.z - epsilon};
+
+    const int nCells = 5; //TODO: Tune this number.  Maybe I want to optimize for number of volumes in the smallest or largest cell?
+                          //      I could try iterating over the loop below.
+
+    size.cellSize = {(max.x - size.origin.x + epsilon)/nCells, (max.z - size.origin.y + epsilon)/nCells};
+    size.max = {nCells, nCells};
+    std::vector<gridCell> cells(size.max.x * size.max.y, {0, 0}); //size.max has number of cells along each grid dimension.  The "y" grid dimension
+                                                                  //really maps to z in global coordinates, and I refer to it in kernels as size.max.v.
+
+    //Then, group boxes into cells, updating boxIndices as I go.
+    for(int whichBox = 0; whichBox < (int)boxes.size(); ++whichBox)
+    {
+      //Put boxes[whichBox] into cells based on each of its corners.
+      //If multiple corners are in the same box, I only want to add
+      //one copy of whichBox (this should be a common case).
+      for(const auto corner: ::corners(boxes[whichBox]))
+      {
+        const auto diff = corner - min;
+        const int xCell = diff.x/size.cellSize.x, yCell = diff.z/size.cellSize.y,
+                  whichCell = xCell + yCell*size.max.x; //See comments about size.max.y above
+        if(xCell >= size.max.x) std::cout << "xCell = " << xCell << " at corner " << corner << " with max = " << max << " is too large!\n";
+        assert(xCell < size.max.x && "Got a corner outside of size.max.x!  Grid construction failed.");
+        assert(yCell < size.max.y && "Got a corner outside of size.max.y!  Grid construction failed.");
+        assert(whichCell < (int)cells.size() && "Corner is inside of size.max, but I got an invalid cell somehow!  Grid construction failed.");
+        assert(whichCell >= 0 && "Corner is before the first grid cell somehow!  Grid construction failed.");
+
+        if(!searchForIndex(cells[whichCell], boxIndices, whichBox))
+        {
+          boxIndices.push_back(whichBox);
+          ++cells[whichCell].end;
+          assert(cells[whichCell].end > cells[whichCell].begin
+                 && "Got a cell whose first element is after its last element during grid construction!");
+
+          //All gridCells after this one need to have their begin and end members incremented.
+          //TODO: This seems inefficient
+          for(int afterCell = whichCell + 1; afterCell < (int)cells.size(); ++afterCell)
+          {
+            ++cells[afterCell].begin;
+            ++cells[afterCell].end;
+          }
+        }
+      }
+    }
+
+    return std::make_tuple(size, cells, boxIndices);
+  }
+
   void Geometry::sendToGPU(cl::Context& ctx)
   {
     //Update fSky and fGroundTexNorm to include all buildings.
@@ -336,10 +441,6 @@ namespace app
       for(const auto& corner: corners) fSky.radius = std::max(fSky.radius, corner.mag());
     }
 
-    #ifndef NDEBUG
-    std::cout << "Set sky radius to " << fSky.radius << "\n";
-    #endif //NDEBUG
-
     //Force the ground plane to cover the equator of fSky
     fGroundTexNorm = {fSky.radius, fSky.radius};
 
@@ -347,9 +448,14 @@ namespace app
     const auto sunDir = fSun.center.norm();
     fSun.center = sunDir * fSky.radius;
 
+    auto [size, cells, gridIndices] = buildGrid(fBoxes);
+
     //Synchronize GPU data with the CPU
+    fGridSize = size;
     fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
+    fGridIndices = cl::Buffer(ctx, gridIndices.begin(), gridIndices.end(), false);
+    fGridCells = cl::Buffer(ctx, cells.begin(), cells.end(), false);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, fTextures->name);
     fDevTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fTextures->name);

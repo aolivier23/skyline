@@ -8,7 +8,7 @@ set( CMAKE_CXX_EXTENSIONS ON )
 
 set( GCC_Flags_For_CXX "-Wall -fPIC -pthread" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_Flags_For_CXX}" )
-set( CMAKE_CXX_FLAGS_DEBUG "-ggdb" )
+set( CMAKE_CXX_FLAGS_DEBUG "-ggdb") #-D_GLIBCXX_DEBUG" )
 
 #Required packages
 #link_directories( /usr/local/lib )

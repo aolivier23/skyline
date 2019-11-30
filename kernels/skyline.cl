@@ -12,8 +12,8 @@
 //Test a ray for intersecting the aabbs in the scene.  Returns texture coordinates by value
 //normal by reference.
 //Updates ray's position but not its direction.
-float3 intersectScene(ray* thisRay, __global aabb* geometry, __global material* materials, const unsigned long int nBoxes, float3* normal,
-                      const float2 groundTexNorm, sphere sky)
+float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSize, __global aabb* geometry, __global int* boxIndices,
+                      __global material* materials, float3* normal, const float2 groundTexNorm, sphere sky, int2* whichGridCell)
 {
   //Intersect the sky
   float closestDist = FLT_MAX;
@@ -35,16 +35,31 @@ float3 intersectScene(ray* thisRay, __global aabb* geometry, __global material* 
     }
   }
 
-  //Intersect buildings
-  for(size_t whichBox = 0; whichBox < nBoxes; ++whichBox)
+  //TODO: To use nextCell(), the camera must never be outside the grid entirely!
+  //      I guess I could do one full square intersection to find the camera grid cell instead.
+  //Intersect grid cells instead of buildings
+  int index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
+  bool hitSomething = false; //TODO: Is there a way to structure this loop without another condition?
+
+  while(!hitSomething && whichGridCell->x < gridSize.max.x && whichGridCell->y < gridSize.max.y)
   {
-    const float dist = aabb_intersect(geometry + whichBox, *thisRay);
-    if(dist > 0 && dist < closestDist)
+    //Intersect boxes in this grid cell if any
+    index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
+    for(size_t whichIndex = cells[index].begin; whichIndex < cells[index].end; ++whichIndex)
     {
-      closestDist = dist;
-      *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
-                                       materials[geometry[whichBox].material], &texCoords);
+      const int whichBox = boxIndices[whichIndex];
+      const float dist = aabb_intersect(geometry + whichBox, *thisRay);
+      if(dist > 0 && dist < closestDist)
+      {
+        closestDist = dist;
+        *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
+                                         materials[geometry[whichBox].material], &texCoords);
+        hitSomething = true;
+      }
     }
+
+    //Calculate the next grid cell to test
+    if(!hitSomething) *whichGridCell = nextCell(gridSize, *thisRay, *whichGridCell);
   }
 
   //Update thisRay's position to the position where it hit the volume it intersected.
@@ -116,10 +131,10 @@ float3 sampleSky(const sphere sky, const sphere sun, const float3 sunEmission, c
 }
 
 __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
-                        const unsigned long int nBoxes, __global material* materials, const sphere sky, const sphere sun,
-                        const float3 sunEmission, const float2 groundTexNorm, const camera cam,
-                        const int nBounces, __global size_t* seeds, const int iterations,
-                        const int nSamplesPerFrame, __read_only image2d_array_t textures, sampler_t textureSampler)
+                        __global int* boxIndices, __global gridCell* gridCells, const grid gridSize, __global material* materials,
+                        const sphere sky, const sphere sun, const float3 sunEmission, const float2 groundTexNorm, const camera cam,
+                        const int nBounces, __global size_t* seeds, const int iterations, const int nSamplesPerFrame,
+                        __read_only image2d_array_t textures, sampler_t textureSampler)
 {
   //TODO: Copy geometry into __local memory
 
@@ -134,6 +149,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   //Reuse first intersection before relfection for each sample of this pixel.
   float3 normal, lightColor = {0.f, 0.f, 0.f}, maskColor, texCoords;
   bool hitSky;
+  int2 cameraCell = positionToCell(gridSize, cam.position), whichGridCell;
 
   //For each sample of this pixel
   //TODO: Using higher samplersPerFrame makes the scene darker
@@ -147,8 +163,14 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     //Simulate a camera
     ray localRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1), &seed);
 
+    //TODO: intersectScene now needs to know which grid cell the camera starts in.  I either need the grid cell of the camera or
+    //      the first cell thisRay hits.  I think it will be more efficient to just do a square intersection here.
+    whichGridCell = cameraCell;
+    if(cameraCell.x < 0 || cameraCell.y < 0 ||
+       cameraCell.x >= gridSize.max.x || cameraCell.y >= gridSize.max.y) whichGridCell = nextCell(gridSize, localRay, (int2){-1, -1});
+
     //Always intersect the scene at least once
-    texCoords = intersectScene(&localRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
+    texCoords = intersectScene(&localRay, gridCells, gridSize, geometry, boxIndices, materials, &normal, groundTexNorm, sky, &whichGridCell);
     hitSky = (texCoords.z == SKY_TEXTURE);
 
     //For each bounce of this ray around the scene.  Stop when I hit the only light source, the sky,
@@ -162,7 +184,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
 
       //Otherwise, scatter this ray off of whatever it hit and intersect the scene again
       scatterAndShade(&localRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler, gamma);
-      texCoords = intersectScene(&localRay, geometry, materials, nBoxes, &normal, groundTexNorm, sky);
+      texCoords = intersectScene(&localRay, gridCells, gridSize, geometry, boxIndices, materials, &normal, groundTexNorm, sky, &whichGridCell);
       hitSky = (texCoords.z == SKY_TEXTURE);
     }
 

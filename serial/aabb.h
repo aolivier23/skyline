@@ -20,7 +20,6 @@ typedef struct aabb_tag
 
   SCALAR(int) material;
   //Dummy ints to ensure same alignment on host and device
-  //TODO: Could I fit 3 floats in here?
   SCALAR(int) dummy1;
   SCALAR(int) dummy2;
   SCALAR(int) dummy3;
