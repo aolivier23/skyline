@@ -1,5 +1,5 @@
 ground: "1024x512/ground.png"
-sky: "/home/aolivier/Downloads/small_harbor_02_1k.hdr"
+sky: "/home/aolivier/app/graphics/skyline/debug/include/examples/1024x512/small_harbor_02_1k.hdr"
 geometry:
   defaultBox_copy:
     width:

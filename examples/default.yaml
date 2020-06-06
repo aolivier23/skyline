@@ -1,0 +1,51 @@
+ground: "1024x512/ground.png"
+sky: "/home/aolivier/app/graphics/skyline/debug/include/examples/1024x512/small_harbor_02_1k.hdr"
+geometry:
+  myFirstBox:
+    width: [0.1, 0.2, 0.3]
+    center: [-0.5, 0.1, -0.3]
+    material: "glass"
+    texNorm: [0.1, 0.2, 0.3]
+materials:
+  marble:
+    back: 1024x512/MarbleBuilding.png
+    emission:
+      - 0
+      - 0
+      - 0
+    left: 1024x512/MarbleBuilding.png
+    right: 1024x512/MarbleBuilding.png
+    top: 1024x512/roof.png
+    bottom: 1024x512/roof.png
+    front: 1024x512/MarbleBuilding.png
+  glass:
+    emission:
+      - 0
+      - 0
+      - 0
+    back: 1024x512/glassBuilding.png
+    left: 1024x512/glassBuilding.png
+    right: 1024x512/glassBuilding.png
+    top: 1024x512/testBuildingRoof.png
+    bottom: 1024x512/testBuildingRoof.png
+    front: 1024x512/glassBuilding.png
+cameras:
+  default:
+    position:
+      - 0
+      - 0.2
+      - 0.6499999
+    focal:
+      - 0.5787964
+      - 0.3593785
+      - 1.320542
+sun:
+  radius: 2
+  color:
+    - 20
+    - 16
+    - 12
+  center:
+    - 7.071068
+    - 7.071068
+    - 0

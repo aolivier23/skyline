@@ -35,21 +35,22 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     }
   }
 
-  //TODO: To use nextCell(), the camera must never be outside the grid entirely!
-  //      I guess I could do one full square intersection to find the camera grid cell instead.
   //Intersect grid cells instead of buildings
   int index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
   bool hitSomething = false; //TODO: Is there a way to structure this loop without another condition?
 
-  while(!hitSomething && whichGridCell->x < gridSize.max.x && whichGridCell->y < gridSize.max.y)
+  while(!hitSomething && whichGridCell->x < gridSize.max.x && whichGridCell->y < gridSize.max.y
+        && whichGridCell->x >= 0 && whichGridCell->y >= 0)
   {
+    const float nextCellDist = distToNextCell(gridSize, *thisRay, *whichGridCell);
+
     //Intersect boxes in this grid cell if any
     index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
     for(size_t whichIndex = cells[index].begin; whichIndex < cells[index].end; ++whichIndex)
     {
       const int whichBox = boxIndices[whichIndex];
       const float dist = aabb_intersect(geometry + whichBox, *thisRay);
-      if(dist > 0 && dist < closestDist)
+      if(dist > 0 && dist < closestDist && dist < nextCellDist)
       {
         closestDist = dist;
         *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
@@ -59,8 +60,8 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     }
 
     //Calculate the next grid cell to test
-    if(!hitSomething) *whichGridCell = nextCell(gridSize, *thisRay, *whichGridCell);
-    //hitSomething = true; //TODO: This line shows only objects in the camera's current cell.  It proves that objects are being assigned to
+    if(!hitSomething) *whichGridCell = positionToCell(gridSize, thisRay->position + thisRay->direction*nextCellDist); //nextCell(gridSize, *thisRay, *whichGridCell);
+    //hitSomething = true; //TODO: This line shows only objects in the camera's current cell.  It shows whether objects are being assigned to
                            //      the wrong grid cell.
   }
 
@@ -138,8 +139,6 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   //      isSpecular
   //      texture access for the ground plane
   //      Using fabs(normal.x) for localXAxis
-  //
-  //      Since blue is the z component of color, it almost seems like maskColor is getting multiplied by position somewhere
   *maskColor *= color.xyz * dot(thisRay->direction, normal);
 }
 

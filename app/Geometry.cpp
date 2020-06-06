@@ -118,7 +118,7 @@ namespace app
   {
     //argv[0] is always the path to this application.  So, the number of command line arguments is really argc - 1, and
     //I'm going to ignore argv[0].
-    if(argc != 2) throw exception("Got " + std::to_string(argc-1) + " command line arguments, but expected excatly 1");
+    if(argc != 2) throw exception("Got " + std::to_string(argc-1) + " command line arguments, but expected exactly 1");
     if(!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) throw exception("");
 
     return load(argv[1]);
@@ -372,7 +372,7 @@ namespace app
                           //      I could try iterating over the loop below.
 
     size.cellSize = {(max.x - size.origin.x + epsilon)/nCells, (max.z - size.origin.y + epsilon)/nCells};
-    std::cout << "cellSize is " << size.cellSize << "\n"; //TODO: Remove me
+    std::cout << "cellSize is " << size.cellSize << "\nmin is " << min << "\nmax is " << max << "\n"; //TODO: Remove me
     size.max = {nCells, nCells};
 
     //Next, group boxes into cells.  The std::set<> makes sure each box can be in each cell only once.
