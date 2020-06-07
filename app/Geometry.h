@@ -42,6 +42,7 @@ namespace app
   {
     public:
       //Create an empty application state.
+      //TODO: Initialize with default.yaml geometry
       Geometry() = default;
 
       //Serialization and de-serialization
@@ -62,9 +63,9 @@ namespace app
       inline const cl::float3& sunEmission() const { return fSunEmission; }
       inline const cl::ImageGL& textures() const { return fDevTextures; }
       inline size_t nBoxes() const { return fBoxes.size(); }
-      inline const grid& gridSize() const { return fGridSize; }
-      inline const cl::Buffer& gridCells() const { return fGridCells; }
-      inline const cl::Buffer& gridIndices() const { return fGridIndices; }
+      inline grid& gridSize() { return fGridSize; }
+      inline const cl::Buffer& gridCells() const { return fDevGridCells; }
+      inline const cl::Buffer& gridIndices() const { return fDevGridIndices; }
 
       //Custom exception class to explain why the command line couldn't be parsed.
       //TODO: Derive from app::exception?
@@ -81,6 +82,7 @@ namespace app
         aabb& box;
         material& mat;
         std::string& name;
+        std::vector<cl::int2> gridCells;
       };
 
       //Upload host-side state to the GPU
@@ -114,6 +116,8 @@ namespace app
                                  //texture coordinates.  Should be the
                                  //size of the ground.
       std::unique_ptr<gl::TextureArray<GL_RGBA32F, GL_UNSIGNED_BYTE>> fTextures;
+      std::vector<gridCell> fGridCells; //Grid cells contain the boxes in fBoxes through a mapping defined in fBoxIndices.
+      std::vector<int> fBoxIndices; //List of boxes in each of fGridCells.  These are indices into fBoxes.
 
       //Metadata with references to GPU-ready data
       std::string skyTextureFile;
@@ -131,14 +135,18 @@ namespace app
       cl::Buffer fDevMaterials;
       cl::Buffer fDevBoxes;
       cl::ImageGL fDevTextures;
-      cl::Buffer fGridCells;
-      cl::Buffer fGridIndices;
+      cl::Buffer fDevGridCells;
+      cl::Buffer fDevGridIndices; //N.B.: fGridIndices are necessary so that each gridCell can refer to a contiguous range of elements
+                               //      and multiple gridCells can refer to a given box.
 
       //Helper functions
       //Group a collection of boxes into 2D gridCells.  Returns the grid's size, the gridCells, and
       //the indices into the box collection that are sorted to be compatible with the container of
       //gridCells.
-      std::tuple<grid, std::vector<gridCell>, std::vector<int>> buildGrid(const std::vector<aabb>& boxes);
+      std::tuple<grid, std::vector<gridCell>, std::vector<int>> buildGrid(const std::vector<aabb>& boxes, const cl::int2 nCells);
+
+      //Calculate the boundaries of a geometry of boxes.
+      std::pair<cl::float3, cl::float3> calcGridLimits(const std::vector<aabb>& boxes) const;
   };
 }
 

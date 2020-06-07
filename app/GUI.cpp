@@ -384,6 +384,30 @@ namespace app
     return changed;
   }
 
+  bool drawGrid(app::Geometry& geom) /*, const eng::WithCamera& view)*/
+  {
+    static bool isOpen = false;
+    const bool clicked = ImGui::MenuItem("grid");
+    if(!isOpen) isOpen = clicked;
+    bool changed = false;
+
+    if(isOpen)
+    {
+      ImGui::Begin("grid", &isOpen);
+      //TODO: It's actually really hard to get the kernel code for calculating the camera's grid cell into OpenCL.  Who would have thought?
+      /*const auto cameraCell = positionToCell(geom.gridSize(),  view.fCamController->model().exactPosition());
+      ImGui::LabelText("Camera Cell:", "{%d, %d}", cameraCell.x, cameraCell.y);*/
+      if(ImGui::InputInt2("Number of Grid Cells", geom.gridSize().max.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+
+      //Setting a number of grid cells < 1 is disastrous for the grid generation stage.
+      if(geom.gridSize().max.x < 1) geom.gridSize().max.x = 1;
+      if(geom.gridSize().max.y < 1) geom.gridSize().max.y = 1;
+      ImGui::End();
+    }
+
+    return changed;
+  }
+
   bool editBox(std::unique_ptr<Geometry::selected>& selection, const Geometry& geometry)
   {
     //If I call editBox at all, that means that selection is not nullptr and so the GUI should open.
@@ -414,6 +438,10 @@ namespace app
     }
 
     //TODO: Material editor here?
+
+    //Grid acceleration structure information for this box
+    ImGui::Text("Grid Cells with this Box:");
+    for(const auto& cell: selection->gridCells) ImGui::Text("{%d, %d}", cell.x, cell.y);
 
     ImGui::End();
 

@@ -6,6 +6,8 @@
 #include "serial/grid.h"
 #endif //NOT_ON_DEVICE
 
+//TODO: The following code only works in OpenCL C
+#ifndef NOT_ON_DEVICE
 float distToNextCell(const grid params, const ray thisRay, const CL(int2) currentCell)
 {
   //Find distance to the closest of the 4 planes that define this cell
@@ -43,11 +45,12 @@ CL(int2) nextCell(const grid params, const ray thisRay, const CL(int2) currentCe
 
   return positionToCell(params, thisRay.position + thisRay.direction * distToIntersect);
 }
+#endif //NOT_ON_DEVICE
 
 //Find the grid cell at a position.  This might return a cell that is outside params.
 //If so, try using nextCell with {0, 0} as currentCell.
 CL(int2) positionToCell(const grid params, const CL(float3) pos)
 {
   //TODO: This line uses swizzling, so it won't compile on the host without major upgrades to my vector library
-  return convert_int_sat_rtn((pos.xz - params.origin) / params.cellSize);
+  return convert_int_sat_rtn(((CL(float2)){pos.x, pos.z} - params.origin) / params.cellSize);
 }

@@ -258,6 +258,8 @@ namespace app
       {
         cameras.emplace_back(camera.first.as<std::string>(), eng::CameraModel(camera.second["position"].as<cl::float3>().data, camera.second["focal"].as<cl::float3>().data, camera.second["size"].as<float>(1.f)));
       }
+
+      fGridSize.max = document["grid"].as<cl::int2>(cl::int2{1, 1});
     }
     catch(const YAML::Exception& e)
     {
@@ -332,6 +334,9 @@ namespace app
       onFile["focal"] = cl::float3(inMemory.second.focalPlane());
     }
 
+    //Save grid state
+    newFile["grid"] = fGridSize.max;
+
     //Write to a YAML file.
     std::ofstream output(fileName);
     output << newFile;
@@ -343,19 +348,11 @@ namespace app
   {
   }
 
-  //Group a collection of boxes into 2D gridCells.  Returns the grid's size, the gridCells, and
-  //the indices into the box collection that are sorted to be compatible with the container of
-  //gridCells.
-  std::tuple<grid, std::vector<gridCell>, std::vector<int>> Geometry::buildGrid(const std::vector<aabb>& boxes)
+  //Calculate the (x, z) limits for a grid acceleration structure
+  std::pair<cl::float3, cl::float3> Geometry::calcGridLimits(const std::vector<aabb>& boxes) const
   {
-    grid size;
-    std::vector<int> boxIndices;
-
-    //First, choose size: origin, max, and cellSize.  I could choose origin and max * cellSize
-    //by looking at a 2D bounding area for boxes.  cellSize should be optimized somehow to maximize
-    //performance.  Maybe I could start with a minimum or maximum number of boxes per cell.
-    //Eventually, this could be a good opportunity for real-time optimization.
     cl::float3 min = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()}, max = -min;
+
     for(const auto& box: boxes)
     {
       for(const auto corner: ::corners(box))
@@ -365,36 +362,64 @@ namespace app
       }
     }
 
-    constexpr float epsilon = 0.1; //Make the grid a little bigger than it needs to be so that all volumes unambiguously fit inside it.
-    size.origin = {min.x - epsilon, min.z - epsilon};
+    const auto epsilon = cl::float3{1.f, 1.f, 1.f} * 0.1f; //Make the grid a little bigger than it needs to be so that all volumes unambiguously fit inside it.
 
-    const int nCells = 5; //TODO: Tune this number.  Maybe I want to optimize for number of volumes in the smallest or largest cell?
-                          //      I could try iterating over the loop below.
+    return std::make_pair(min - epsilon, max + epsilon);
+  }
 
-    size.cellSize = {(max.x - size.origin.x + epsilon)/nCells, (max.z - size.origin.y + epsilon)/nCells};
-    std::cout << "cellSize is " << size.cellSize << "\nmin is " << min << "\nmax is " << max << "\n"; //TODO: Remove me
-    size.max = {nCells, nCells};
+  //Group a collection of boxes into 2D gridCells.  Returns the grid's size, the gridCells, and
+  //the indices into the box collection that are sorted to be compatible with the container of
+  //gridCells.
+  //TODO: When I'm ready for a grid optimizer, I need to split this up into:
+  //      1) Get grid min/max and origin
+  //      2) Decide number of grid cells along each axis
+  //      3) Put boxes into grid cells
+  std::tuple<grid, std::vector<gridCell>, std::vector<int>> Geometry::buildGrid(const std::vector<aabb>& boxes, const cl::int2 nCells)
+  {
+    grid size;
+    std::vector<int> boxIndices;
+
+    //First, choose size: origin, max, and cellSize.  I could choose origin and max * cellSize
+    //by looking at a 2D bounding area for boxes.  cellSize should be optimized somehow to maximize
+    //performance.  Maybe I could start with a minimum or maximum number of boxes per cell.
+    //Eventually, this could be a good opportunity for real-time optimization.
+    auto [min, max] = calcGridLimits(boxes);
+
+    size.origin = {min.x, min.z};
+    size.max = {nCells.x, nCells.y};
+    size.cellSize = {(max.x - min.x)/size.max.x, (max.z - min.z)/size.max.y};
 
     //Next, group boxes into cells.  The std::set<> makes sure each box can be in each cell only once.
     std::vector<std::set<int>> boxesInEachCell(size.max.x * size.max.y);
     for(int whichBox = 0; whichBox < (int)boxes.size(); ++whichBox)
     {
-      //Put boxes[whichBox] into cells based on each of its corners.
-      //If multiple corners are in the same box, I only want to add
-      //one copy of whichBox (this should be a common case).
+      //TODO: New algorithm for placing whichBox in cell(s).  Beware: it will end badly with boxes that aren't aligned
+      //      with the x and z axes!
+      cl::float3 boxMin, boxMax;
       for(const auto corner: corners(boxes[whichBox]))
       {
-        const auto diff = corner - min;
-        const int xCell = diff.x/size.cellSize.x, yCell = diff.z/size.cellSize.y,
-                  whichCell = xCell + yCell*size.max.x; //See comments about size.max.y above
-                                                                                                                                                
-        //Check for logic errors only in debug builds
-        assert(xCell < size.max.x && "Got a corner outside of size.max.x!  Grid construction failed.");
-        assert(yCell < size.max.y && "Got a corner outside of size.max.y!  Grid construction failed.");
-        assert(whichCell < (int)boxesInEachCell.size() && "Corner is inside of size.max, but I got an invalid cell somehow!  Grid construction failed.");
-        assert(whichCell >= 0 && "Corner is before the first grid cell somehow!  Grid construction failed.");
+        boxMin = ::vecMin(boxMin, corner);
+        boxMax = ::vecMax(boxMax, corner);
+      }
 
-        boxesInEachCell[whichCell].insert(whichBox);
+      const cl::float3 distToBoxMin = boxMin - min,
+                       distToBoxMax = boxMax - min;
+      
+      //TODO: Do I even need a std::set<> anymore?  I should now loop over each cell once
+      for(int xCell = distToBoxMin.x/size.cellSize.x; xCell < distToBoxMax.x/size.cellSize.x; ++xCell)
+      {
+        for(int yCell = distToBoxMin.z/size.cellSize.y; yCell < distToBoxMax.z/size.cellSize.y; ++yCell)
+        {
+          const int whichCell = xCell + yCell*size.max.x; //See comments about size.max.y above
+
+          //Check for logic errors only in debug builds
+          assert(xCell < size.max.x && "Got a corner outside of size.max.x!  Grid construction failed.");
+          assert(yCell < size.max.y && "Got a corner outside of size.max.y!  Grid construction failed.");
+          assert(whichCell < (int)boxesInEachCell.size() && "Corner is inside of size.max, but I got an invalid cell somehow!  Grid construction failed.");
+          assert(whichCell >= 0 && "Corner is before the first grid cell somehow!  Grid construction failed.");
+
+          boxesInEachCell[whichCell].insert(whichBox);
+        }
       }
     }
 
@@ -433,14 +458,14 @@ namespace app
     const auto sunDir = fSun.center.norm();
     fSun.center = sunDir * fSky.radius;
 
-    auto [size, cells, gridIndices] = buildGrid(fBoxes);
+    std::tie(fGridSize, fGridCells, fBoxIndices) = buildGrid(fBoxes, fGridSize.max); //TODO: Provide number of grid cells which could come from a user interface
 
     //Synchronize GPU data with the CPU
-    fGridSize = size;
+    //fGridSize = size;
     fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
-    fGridIndices = cl::Buffer(ctx, gridIndices.begin(), gridIndices.end(), false);
-    fGridCells = cl::Buffer(ctx, cells.begin(), cells.end(), false);
+    fDevGridIndices = cl::Buffer(ctx, fBoxIndices.begin(), fBoxIndices.end(), false);
+    fDevGridCells = cl::Buffer(ctx, fGridCells.begin(), fGridCells.end(), false);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, fTextures->name);
     fDevTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fTextures->name);
@@ -463,20 +488,20 @@ namespace app
     else closest = groundDist;
 
     //Find the closest box that is closer than sky/ground if any.
-    auto found = fBoxes.end();
-    for(auto box = fBoxes.begin(); box != fBoxes.end(); ++box)
+    size_t found = fBoxes.size();
+    for(size_t whichBox = 0; whichBox != fBoxes.size(); ++whichBox)
     {
-      const auto dist = aabb_intersect(&*box, fromCamera);
+      const auto dist = aabb_intersect(&fBoxes[whichBox], fromCamera);
       if(dist > 0 && dist < closest)
       {
         closest = dist;
-        found = box;
+        found = whichBox;
       }
     }
 
     //If I couldn't find a box, create one.
     //I'm assuming that there are no boxes outside fSky.
-    if(found == fBoxes.end())
+    if(found == fBoxes.size())
     {
       const auto intersection = fromCamera.position + fromCamera.direction * closest;
       boxNames.push_back("defaultBox");
@@ -484,10 +509,25 @@ namespace app
                             cl::float3{intersection.x, fFloorY, intersection.z},
                             cl::float3{0.1, 0.1, 0.1},
                             fBoxes.empty()?SKY_TEXTURE:fBoxes.back().material});
-      found = std::prev(fBoxes.end());
+    }
+
+    //Look up the grid index of this box
+    std::vector<cl::int2> cellsWithThisBox;
+    for(int xCell = 0; xCell < fGridSize.max.x; ++xCell)
+    {
+      for(int yCell = 0; yCell < fGridSize.max.y; ++yCell)
+      {
+        const int whichCell = xCell + yCell * fGridSize.max.x;
+        const auto begin = fBoxIndices.begin() + fGridCells[whichCell].begin,
+                   end = fBoxIndices.begin() + fGridCells[whichCell].end;
+
+
+        if(std::find(begin, end, found) != end) cellsWithThisBox.push_back({xCell, yCell});
+      }
     }
 
     //TODO: return a transaction instead
-    return std::make_unique<selected>(selected{*found, fMaterials[found->material], boxNames[std::distance(fBoxes.begin(), found)]});
+    return std::make_unique<selected>(selected{fBoxes[found], fMaterials[fBoxes[found].material], boxNames[found],
+                                               cellsWithThisBox});
   }
 }

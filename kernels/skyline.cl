@@ -188,6 +188,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
 
     //TODO: intersectScene now needs to know which grid cell the camera starts in.  I either need the grid cell of the camera or
     //      the first cell thisRay hits.  I think it will be more efficient to just do a square intersection here.
+    //TODO: When the camera leaves the grid, it can't seem to find its way back in...
     whichGridCell = cameraCell;
     if(cameraCell.x < 0 || cameraCell.y < 0 ||
        cameraCell.x >= gridSize.max.x || cameraCell.y >= gridSize.max.y) whichGridCell = nextCell(gridSize, localRay, (int2){-1, -1});

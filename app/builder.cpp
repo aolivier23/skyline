@@ -12,6 +12,7 @@
 #include <CL/cl_gl.h>
 
 //GLAD includes
+#define IMGUI_IMPL_OPENGL_LOADER_GLAD
 #include "glad/include/glad/glad.h"
 
 //app includes
@@ -242,6 +243,7 @@ int main(const int argc, const char** argv)
           app::drawCameras(geom, change);
           app::drawMetrics(io);
           app::drawHelp();
+          if(app::drawGrid(geom)) geom.sendToGPU(ctx);
           if(app::drawEngine(change)) change.onCameraChange();
           ImGui::EndMainMenuBar();
 

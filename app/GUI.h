@@ -44,6 +44,11 @@ namespace app
   //to be updated.
   bool drawEngine(eng::WithRandomSeeds& engine);
 
+  //Show a window displaying details of the grid acceleration structure like
+  //the camera's current grid cell and the grid cell of the most recently selected
+  //object.  Returns true if grid configuration changed.
+  bool drawGrid(app::Geometry& app); /*, const eng::WithCamera& view);*/
+
   //Pop up a GUI to edit the parameters of an aabb and its asscoiated metadata.
   //Returns true if something about selection changed that needs to be uploaded
   //to the GPU.  reset()ing selection de-selects that box.  That should happen
