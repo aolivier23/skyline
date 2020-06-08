@@ -20,4 +20,7 @@ CL(int2) nextCell(const grid params, const ray thisRay, const CL(int2) currentCe
 //If so, try using nextCell with {-1, -1} as currentCell.
 CL(int2) positionToCell(const grid params, const CL(float3) pos);
 
+//Find the distance to a ray's intersection point with the grid
+float grid_intersect(const grid rect, const ray thisRay);
+
 #endif //GRID_H

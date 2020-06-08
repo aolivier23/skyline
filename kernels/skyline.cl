@@ -186,12 +186,15 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     //Simulate a camera
     ray localRay = generateRay(cam, pixel, get_global_size(0), get_global_size(1), &seed);
 
-    //TODO: intersectScene now needs to know which grid cell the camera starts in.  I either need the grid cell of the camera or
-    //      the first cell thisRay hits.  I think it will be more efficient to just do a square intersection here.
-    //TODO: When the camera leaves the grid, it can't seem to find its way back in...
+    //Figure out where localRay enters the grid
     whichGridCell = cameraCell;
     if(cameraCell.x < 0 || cameraCell.y < 0 ||
-       cameraCell.x >= gridSize.max.x || cameraCell.y >= gridSize.max.y) whichGridCell = nextCell(gridSize, localRay, (int2){-1, -1});
+       cameraCell.x >= gridSize.max.x || cameraCell.y >= gridSize.max.y)
+    {
+      const float distToGrid = grid_intersect(gridSize, localRay);
+      if(distToGrid > 0) whichGridCell = positionToCell(gridSize, localRay.position + localRay.direction * (distToGrid + 0.001f));
+      //else it doesn't matter what whichGridCell is anyway as long as it's outside the grid's limits
+    }
 
     //Always intersect the scene at least once
     texCoords = intersectScene(&localRay, gridCells, gridSize, geometry, boxIndices, materials, &normal, groundTexNorm, sky, &whichGridCell);
