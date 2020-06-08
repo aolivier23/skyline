@@ -31,9 +31,6 @@ float distToNextCell(const grid params, const ray thisRay, const CL(int2) curren
   //      corner of the grid that's being split in half from the middle.  This building seems wide enough to be in multiple grid cells.
   //TODO: I'm getting into an infinite loop at large y with hardEnough.yaml.  Maybe the problem has to do with rays that are
   //      missing all buildings and leaving the grid?  Seems like that happens at ground level too when I see the background.
-  //TODO: I learned from https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/grid that I have to be more careful
-  //      with objects that are in multiple cells.  I could intersect a part of an object that's in another cell, and my current
-  //      loop would stop there.
   return min(distances.x, distances.y);
 }
 
@@ -52,5 +49,5 @@ CL(int2) nextCell(const grid params, const ray thisRay, const CL(int2) currentCe
 CL(int2) positionToCell(const grid params, const CL(float3) pos)
 {
   //TODO: This line uses swizzling, so it won't compile on the host without major upgrades to my vector library
-  return convert_int_sat_rtn(((CL(float2)){pos.x, pos.z} - params.origin) / params.cellSize);
+  return convert_int_sat_rtn((pos.xz - params.origin) / params.cellSize);
 }

@@ -202,7 +202,7 @@ namespace app
       }
 
       ImGui::PlotLines("", timeBuffer.data(), timeBuffer.size(), 0,
-                       ("Average Frame Time: " + std::to_string(timeBuffer[0]) + " ms (~" + std::to_string(io.Framerate) + " FPS)").c_str(),
+                       ("Average Frame Time: " + std::to_string(timeBuffer[0]) + " ms (~" + std::to_string((int)(io.Framerate)) + " FPS)").c_str(),
                        0., 2.*timeBuffer[0], ImVec2(0, 80));
       
       ImGui::End();
