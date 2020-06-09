@@ -243,7 +243,9 @@ int main(const int argc, const char** argv)
           app::drawCameras(geom, change);
           app::drawMetrics(io);
           app::drawHelp();
+
           if(app::drawGrid(geom)) geom.sendToGPU(ctx);
+          if(app::drawBackground(geom)) change.onCameraChange();
           if(app::drawEngine(change)) change.onCameraChange();
           ImGui::EndMainMenuBar();
 

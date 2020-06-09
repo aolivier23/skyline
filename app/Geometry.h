@@ -57,10 +57,12 @@ namespace app
       //Application handles to data on the GPU
       inline const cl::Buffer& materials() const { return fDevMaterials; }
       inline const cl::Buffer& boxes() const { return fDevBoxes; }
-      inline const sphere& sky() const { return fSky; }
-      inline const sphere& sun() const { return fSun; }
-      inline const cl::float2& groundTexNorm() const { return fGroundTexNorm; }
-      inline const cl::float3& sunEmission() const { return fSunEmission; }
+      inline sphere& sky() { return fSky; }
+      inline sphere& sun() { return fSun; }
+      inline cl::float2& groundTexNorm() { return fGroundTexNorm; }
+      inline const std::string& groundFile() const { return groundTextureFile; }
+      inline const std::string& skyFile() const { return skyTextureFile; }
+      inline cl::float3& sunEmission() { return fSunEmission; }
       inline const cl::ImageGL& textures() const { return fDevTextures; }
       inline size_t nBoxes() const { return fBoxes.size(); }
       inline grid& gridSize() { return fGridSize; }

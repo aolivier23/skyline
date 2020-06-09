@@ -156,8 +156,9 @@ namespace app
       //any other textures.
       ::findOrCreate(document["sky"].as<std::string>(), textureNames);
       skyTextureFile = document["sky"].as<std::string>();
-      ::findOrCreate(document["ground"].as<std::string>(), textureNames);
-      groundTextureFile = document["ground"].as<std::string>();
+      ::findOrCreate(document["ground"]["file"].as<std::string>(), textureNames);
+      groundTextureFile = document["ground"]["file"].as<std::string>();
+      fGroundTexNorm = document["ground"]["texNorm"].as<cl::float2>(cl::float2{1.f, 1.f});
 
       //Configure the skybox.  It will be automatically adjusted to
       //fit everything if it turns out to be too small in sendToGPU().
@@ -280,7 +281,8 @@ namespace app
 
     //Write sky and ground textures
     newFile["sky"] = skyTextureFile;
-    newFile["ground"] = groundTextureFile;
+    newFile["ground"]["file"] = groundTextureFile;
+    newFile["ground"]["texNorm"] = fGroundTexNorm;
     auto sun = newFile["sun"];
     sun["color"] = fSunEmission;
     sun["center"] = fSun.center;
@@ -452,7 +454,8 @@ namespace app
     }
 
     //Force the ground plane to cover the equator of fSky
-    fGroundTexNorm = {fSky.radius, fSky.radius};
+    //TODO: Do I want to stretch the ground plane like this automatically?
+    //fGroundTexNorm = {1.f, 1.f}; //{fSky.radius, fSky.radius};
 
     //Force the sun to have a center on fSky
     const auto sunDir = fSun.center.norm();

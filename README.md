@@ -6,6 +6,71 @@ Skyline is a real-time raytracing renderer for cities.  It will
 be suitable for rendering both from ground level and from roof-top
 level.
 
+##Where to next:
+- Test cases where grid acceleration structure will excel
+  - Model city blocks of buildings
+  - Want most buildings in 1 grid cell
+  - Need to generate geometry with many more buildings
+    - Would be easy to copy and paste range with overlook, but...
+      - Debug random freezes especially at high y
+      - Need multi-building selection tool.  Draw a box with the mouse, trace everything in box (with other GPU?),
+        and move all centers simultaneously
+      - Hotkeys to swap between cameras seem nice in general.  0-9 on number pad like Blender seems reasonable.
+    - Or, I could randomly generate a block
+      - From a separate program that writes YAML
+      - As a test feature in builder
+        - Deleting buildings becomes important
+        - Could use as a template with user modifying the random buildings
+      - Don't want buildings to overlap
+  - New metrics:
+    - Total number of buildings drawn
+    - histogram of number of buildings in each cell?d
+- Optimize cell iteration
+  - Does geometry in `__local` help?  How many buildings can I fit in 48kiB?
+  - Simplify loop and check assumptions
+  - Would a 3D grid help at all?  This would let me ignore store-fronts on skyscrapers and roof features from the ground.
+  - I seem to remember a comments about nested BVHs being much more effective.  Does that help with a grid too?
+  - Simple grid optimizer that operates on number of cells in each dimension?
+    - Switch to turn on/off
+    - Want to stop trying new strategies at some point
+    - Simulated annealing?
+- Camera is still very annoying
+  - Want arrow keys to move in camera's current direction!
+  - Smooth camera motion -> just change jump size?  Are buildings too big relative to the camera?  I'm seeing breaks in buildings right now.
+  - Switch cameras with number pad
+  - Want a default overlook camera from above tallest building
+  - Chaperone to stop camera from moving outside of the sky dome
+- Try to generate some store fronts?
+  - Awning -> boxes that don't touch the ground
+  - Textures with interesting stores
+- Things I learned about skyscrapers in Chicago
+  - Not all windows are aligned -> normal offsets in a texture
+  - Can see sky through edges of buildings' windows -> full Fresnel equation?
+  - Interiors are not completely invisible -> buildings inside buildings?  What about floors?
+  - Many skyscrapers aren't just boxes
+    - Easy way: displacement mapping from a texture.  Carve into buildings so that aabb is still a bounding box.  Have to return `FLT_MAX` if miss because of displacement map?
+    - Harder way: building := 6 mutually cutting planes.  Implies rebuilding much of kernel?
+- More UI modes
+  - Building edit mode:
+    - mouse drags building dimensions
+    - Orbit building?
+  - Position edit mode: mouse drags building position
+  - Create boxes in relation to each other
+    - Extrude from surface
+    - Set alley width between buildings
+    - Create buildings within a block
+    - Grid?  Other guides?
+    - Prevent buildings from overlapping when moving?
+  - Highlight buildings that are in multiple grid cells?
+  - Highlight buildings by/within grid cell?  How can I highlight buildings in general?  Litterally shine a bright light on them?
+  - In general, color-coding buildings would be very powerful
+- Advanced light sources
+  - Buildings as light sources
+    - Challenge: scatterAndShade() becomes much more complicated
+    - Goal: Streetlights in a night scene
+    - Emitted light in building textures
+  - On last bounce, redirect rays to sky?  Should work well except under awnings etc.
+
 ##Planned Features:
 
 1. Define buildings as collections of [axis-aligned boxes](#AABB-algorithm).

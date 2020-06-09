@@ -49,6 +49,10 @@ namespace app
   //object.  Returns true if grid configuration changed.
   bool drawGrid(app::Geometry& app); /*, const eng::WithCamera& view);*/
 
+  //Show a window for controlling the skybox and the ground.  Returns true
+  //if any of these changed.
+  bool drawBackground(app::Geometry& geom);
+
   //Pop up a GUI to edit the parameters of an aabb and its asscoiated metadata.
   //Returns true if something about selection changed that needs to be uploaded
   //to the GPU.  reset()ing selection de-selects that box.  That should happen

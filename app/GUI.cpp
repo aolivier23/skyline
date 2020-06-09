@@ -408,6 +408,40 @@ namespace app
     return changed;
   }
 
+  bool drawBackground(app::Geometry& geom)
+  {
+    static bool isOpen = false;
+    const bool clicked = ImGui::MenuItem("background");
+    if(!isOpen) isOpen = clicked;
+    bool changed = false;
+
+    if(isOpen)
+    {
+      ImGui::Begin("background", &isOpen);
+      if(ImGui::CollapsingHeader("sun"))
+      {
+        if(ImGui::InputFloat("size", &geom.sun().radius, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+        if(ImGui::InputFloat3("position", geom.sun().center.data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+        if(ImGui::InputFloat3("sun color", geom.sunEmission().data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+      }
+
+      if(ImGui::CollapsingHeader("sky"))
+      {
+        ImGui::LabelText("texture:", "%s", geom.skyFile().c_str());
+        if(ImGui::InputFloat("horizon", &geom.sky().radius, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+      }
+
+      if(ImGui::CollapsingHeader("ground"))
+      {
+        ImGui::LabelText("texture:", "%s", geom.groundFile().c_str());
+        if(ImGui::InputFloat2("normalization", geom.groundTexNorm().data.s, ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+      }
+      ImGui::End();
+    }
+
+    return changed;
+  }
+
   bool editBox(std::unique_ptr<Geometry::selected>& selection, const Geometry& geometry)
   {
     //If I call editBox at all, that means that selection is not nullptr and so the GUI should open.
