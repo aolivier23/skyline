@@ -13,7 +13,7 @@ float distToNextCell(const grid params, const ray thisRay, const CL(int2) curren
   //Find distance to the closest of the 4 planes that define this cell
   //However, the grid's origin doesn't have to be at (0, 0).
   const CL(float2) dirInv = (CL(float2)){1.f/thisRay.direction.x, 1.f/thisRay.direction.z};
-  const CL(float2) one = (CL(float2)){1.f, 1.f}, epsilon = (CL(float2)){0.001f, 0.001f};
+  const CL(float2) one = (CL(float2)){1.f, 1.f}, epsilon = (CL(float2)){0.001f, 0.001f}; //TODO: Maybe epsilon is the problem?  Scratchapixel doesn't have that.
   const CL(float2) distancesBack = ((convert_float(currentCell) - epsilon)*params.cellSize + params.origin - thisRay.position.xz) * dirInv;
   const CL(float2) distancesFront = ((convert_float(currentCell) + one + epsilon)*params.cellSize + params.origin - thisRay.position.xz) * dirInv;
 
@@ -21,15 +21,6 @@ float distToNextCell(const grid params, const ray thisRay, const CL(int2) curren
   const CL(float2) distances = max(distancesBack, distancesFront);
 
   //Pick the closest intersection with a cell boundary.  That's the distance to the first cell that thisRay enters.
-  //TODO: Crazy things happen when the camera is outside the grid.  Boxes get partially and/or suddenly cut off.
-  //TODO: Boxes are getting cut off as the camera moves both all at once, like being in the wrong grid cell, and
-  //      smoothly with position.  It seems almost like one side of a grid cell, probably the larger (x, z) side, turns on suddenly,
-  //      and the other side turns off gradually.  Could this be truncating behavior?
-  //      The ternary operator-based version never cut off boxes with camera motion.  Why does that happen to the round()-based version?
-  //      The gradual-cutting-off behavior sounds a little like grid cells being cut off of being rounded up to the next integer.
-  //      The gradual-cutting-off behavior persists even when using positionToCell(), which rounds to 0, instead of round().
-  //      After setting round to 0 mode, it seems like I'm now seeing every building correctly except one at the (-x, -z)
-  //      corner of the grid that's being split in half from the middle.  This building seems wide enough to be in multiple grid cells.
   //TODO: I'm getting into an infinite loop at large y with hardEnough.yaml.  Maybe the problem has to do with rays that are
   //      missing all buildings and leaving the grid?  Seems like that happens at ground level too when I see the background.
   return min(distances.x, distances.y);
