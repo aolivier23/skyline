@@ -12,11 +12,12 @@ float distToNextCell(const grid params, const ray thisRay, const CL(int2) curren
 {
   //Find distance to the closest of the 4 planes that define this cell
   //However, the grid's origin doesn't have to be at (0, 0).
+  const CL(float2) dirInv = (CL(float2)){1.f/thisRay.direction.x, 1.f/thisRay.direction.z};
   const CL(float2) one = (CL(float2)){1.f, 1.f}, epsilon = (CL(float2)){0.001f, 0.001f};
-  const CL(float2) distancesBack = ((convert_float(currentCell) - epsilon)*params.cellSize + params.origin - thisRay.position.xz) / thisRay.direction.xz;
-  const CL(float2) distancesFront = ((convert_float(currentCell) + one + epsilon)*params.cellSize + params.origin - thisRay.position.xz) / thisRay.direction.xz;
+  const CL(float2) distancesBack = ((convert_float(currentCell) - epsilon)*params.cellSize + params.origin - thisRay.position.xz) * dirInv;
+  const CL(float2) distancesFront = ((convert_float(currentCell) + one + epsilon)*params.cellSize + params.origin - thisRay.position.xz) * dirInv;
 
-  //Pick the largest distnce for each component.  That's the direction thisRay is going.
+  //Pick the largest distance for each component.  That's the direction thisRay is going.
   const CL(float2) distances = max(distancesBack, distancesFront);
 
   //Pick the closest intersection with a cell boundary.  That's the distance to the first cell that thisRay enters.

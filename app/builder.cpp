@@ -79,7 +79,7 @@ int main(const int argc, const char** argv)
       glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    auto window = glfwCreateWindow(800, 600, "HelloCL", nullptr, nullptr);
+    auto window = glfwCreateWindow(800, 600, "Skyline Builder", nullptr, nullptr);
     if(window == nullptr)
     {
       std::cerr << "I managed to initialize GLFW, but I couldn't create a window with an OpenGL context."

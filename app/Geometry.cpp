@@ -392,12 +392,14 @@ namespace app
     size.cellSize = {(max.x - min.x)/size.max.x, (max.z - min.z)/size.max.y};
 
     //Next, group boxes into cells.  The std::set<> makes sure each box can be in each cell only once.
+    //TODO: Do I even need a std::set<> anymore?  I should now loop over each cell once
     std::vector<std::set<int>> boxesInEachCell(size.max.x * size.max.y);
     for(int whichBox = 0; whichBox < (int)boxes.size(); ++whichBox)
     {
       //TODO: New algorithm for placing whichBox in cell(s).  Beware: it will end badly with boxes that aren't aligned
       //      with the x and z axes!
-      cl::float3 boxMin, boxMax;
+      cl::float3 boxMin = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()},
+                 boxMax = {std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min()};
       for(const auto corner: corners(boxes[whichBox]))
       {
         boxMin = ::vecMin(boxMin, corner);
@@ -407,7 +409,6 @@ namespace app
       const cl::float3 distToBoxMin = boxMin - min,
                        distToBoxMax = boxMax - min;
       
-      //TODO: Do I even need a std::set<> anymore?  I should now loop over each cell once
       for(int xCell = distToBoxMin.x/size.cellSize.x; xCell < distToBoxMax.x/size.cellSize.x; ++xCell)
       {
         for(int yCell = distToBoxMin.z/size.cellSize.y; yCell < distToBoxMax.z/size.cellSize.y; ++yCell)

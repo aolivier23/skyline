@@ -42,6 +42,33 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
   while(!hitSomething && whichGridCell->x < gridSize.max.x && whichGridCell->y < gridSize.max.y
         && whichGridCell->x >= 0 && whichGridCell->y >= 0)
   {
+    //TODO: What happens if nextCellDist < 0?  Seems like that wouldn't kill the loop right away.
+    //      If nextCellDist < 0 and I don't hit any boxes, I try to calculate the cell I'm in after traveling to
+    //      the backwards boundary of this cell.  Then, I get distToNextCell() again.  The hope is that epsilon in
+    //      distToNextCell will have bumped me out of the grid by the time positionToCell() happens, but
+    //      I could get into a loop if that doesn't happen.  Can I freeze the application with no boxes?
+    //
+    //      Nope, I can't seem to get stuck with the loop over boxes cut out.  How about if I don't do anything which each box?
+    //
+    //      Nope, I can't get stuck just calculating whichBox.
+    //
+    //      I can't even get stuck unless I let hitSomething be set to true.  Of course, setting hitSomething to true
+    //      lets rays bounce.  So, rays could be finding their way into bad situations that I'd never run into otherwise.
+    //
+    //      I can reliably reproduce a crash today.  It happens with both 1x1 and 3x3 grids.  I set the camera y position
+    //      to 2.0 and then slowly scroll to the right from the starting position in hardEnough.yaml.  When I start to
+    //      see a 3rd corner of the grid while keeping the camera roughly level, the kernel gets stuck.
+    //
+    //      Moving the camera around at ground level first gave a different result.  The kernel got stuck immediately
+    //      when I set the camera position to 2 this time.  It didn't even render a frame of the camera at the new y
+    //      position.
+    //
+    //      I can also get crashes without ever looking at that corner of the geometry.  Both scenes that have crashed
+    //      involved the sky to the side of a building.  I'm pretty sure both scenes also had reflections that reached
+    //      the bounce limit (4 is the default right now).
+    //
+    //      So, why would this depend on the camera state?  Maybe the camera's current cell, or just the ray's current
+    //      cell, is getting into a bad state?  This feels like it could be a negative distance I'm not handling.
     const float nextCellDist = distToNextCell(gridSize, *thisRay, *whichGridCell);
 
     //Intersect boxes in this grid cell if any
@@ -55,37 +82,16 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
         closestDist = dist;
         *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
                                          materials[geometry[whichBox].material], &texCoords);
-        hitSomething = true;
+        hitSomething = true;  //TODO: As soon as I start setting hitSomething to true, I get stuck in what appears to be an infinite loop
       }
     }
 
     //Calculate the next grid cell to test
-    if(!hitSomething) *whichGridCell = positionToCell(gridSize, thisRay->position + thisRay->direction*nextCellDist); //nextCell(gridSize, *thisRay, *whichGridCell);
-    //hitSomething = true; //TODO: This line shows only objects in the camera's current cell.  It shows whether objects are being assigned to
-                           //      the wrong grid cell.
+    //TODO: Seems like this is the only place where I'm vulnerable to an infinite loop.  I must be looping back into the same cell over and over.
+    //      It seems to happen more often at large y.  Could I be getting stuck on the boundary of 2 cells?
+    //      I'm getting stuck with the default 1x1 grid, so I don't think I'm bouncing between grid cells.
+    if(!hitSomething) *whichGridCell = positionToCell(gridSize, thisRay->position + thisRay->direction*nextCellDist);
   }
-
-  //TODO: Grid test is giving unexpected results right now.  This loop checks that all buildings are at least present in the grid.
-  //      Remove me when the problem is solved.
-  /*for(int xCell = 0; xCell < gridSize.max.x; ++xCell)
-  {
-    for(int yCell = 0; yCell < gridSize.max.y; ++yCell)
-    {
-      //Intersect boxes in this grid cell if any
-      const int index = xCell + yCell * gridSize.max.x;
-      for(size_t whichIndex = cells[index].begin; whichIndex < cells[index].end; ++whichIndex)
-      {
-        const int whichBox = boxIndices[whichIndex];
-        const float dist = aabb_intersect(geometry + whichBox, *thisRay);
-        if(dist > 0 && dist < closestDist)
-        {
-          closestDist = dist;
-          *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
-                                           materials[geometry[whichBox].material], &texCoords);
-        }
-      }
-    }
-  }*/
 
   //Update thisRay's position to the position where it hit the volume it intersected.
   thisRay->position = thisRay->position + thisRay->direction*closestDist;
