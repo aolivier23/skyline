@@ -54,7 +54,7 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     {
       const int whichBox = boxIndices[whichIndex];
       const float dist = aabb_intersect(geometry + whichBox, *thisRay);
-      if(dist > 0 && dist < closestDist && dist < nextCellDist)
+      if(dist > 0 && dist < min(closestDist, nextCellDist)) //closestDist && dist < nextCellDist)
       {
         closestDist = dist;
         *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
@@ -66,7 +66,7 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     //Calculate the next grid cell to test
     if(!hitSomething)
     {
-      //Nasty trick to select a vector component at runtime: step(-nextCellDist, -distToNext)
+      //Hack to select the smallest component of a vector component at runtime: step(-nextCellDist, -distToNext)
       *whichGridCell += convert_int_rtn(step(-nextCellDist, -distToNext)*dirSign);
       distToNext += step(-nextCellDist, -distToNext)*distBtwCells;
     }
