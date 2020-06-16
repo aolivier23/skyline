@@ -38,68 +38,16 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
   //Intersect grid cells instead of buildings
   int index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
   bool hitSomething = false; //TODO: Is there a way to structure this loop without another condition?
-  //float nextCellDist = 0;
+  const float2 distBtwCells = distBetweenCells(gridSize, *thisRay);
+  float2 distToNext = distToCellEdge(gridSize, *thisRay, *whichGridCell),
+         dirSign = {(thisRay->direction.x < 0)?-1.f:1.f, (thisRay->direction.z < 0.f)?-1.f:1.f};
 
+  //Grid traversal algorithm from https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/grid
+  //TODO: tx0 and ty0 are different
   while(!hitSomething && whichGridCell->x < gridSize.max.x && whichGridCell->y < gridSize.max.y
         && whichGridCell->x >= 0 && whichGridCell->y >= 0)
   {
-    //TODO: Moving this to the top of the loop where I don't need a condition on hitSomething causes a crash
-    //      a little sooner.
-    //      This uses whichGridCell without checking that it's inside the grid though.  Throwing it away for
-    //      that reason.
-    //*whichGridCell = positionToCell(gridSize, thisRay->position + thisRay->direction*nextCellDist);
-    //nextCellDist = distToNextCell(gridSize, *thisRay, *whichGridCell);
-
-    //TODO: What happens if nextCellDist < 0?  Seems like that wouldn't kill the loop right away.
-    //      If nextCellDist < 0 and I don't hit any boxes, I try to calculate the cell I'm in after traveling to
-    //      the backwards boundary of this cell.  Then, I get distToNextCell() again.  The hope is that epsilon in
-    //      distToNextCell will have bumped me out of the grid by the time positionToCell() happens, but
-    //      I could get into a loop if that doesn't happen.  Can I freeze the application with no boxes?
-    //
-    //      Nope, I can't seem to get stuck with the loop over boxes cut out.  How about if I don't do anything which each box?
-    //
-    //      Nope, I can't get stuck just calculating whichBox.
-    //
-    //      I can't even get stuck unless I let hitSomething be set to true.  Of course, setting hitSomething to true
-    //      lets rays bounce.  So, rays could be finding their way into bad situations that I'd never run into otherwise.
-    //
-    //      I can reliably reproduce a crash today.  It happens with both 1x1 and 3x3 grids.  I set the camera y position
-    //      to 2.0 and then slowly scroll to the right from the starting position in hardEnough.yaml.  When I start to
-    //      see a 3rd corner of the grid while keeping the camera roughly level, the kernel gets stuck.
-    //
-    //      Moving the camera around at ground level first gave a different result.  The kernel got stuck immediately
-    //      when I set the camera position to 2 this time.  It didn't even render a frame of the camera at the new y
-    //      position.
-    //
-    //      I can also get crashes without ever looking at that corner of the geometry.  Both scenes that have crashed
-    //      involved the sky to the side of a building.  I'm pretty sure both scenes also had reflections that reached
-    //      the bounce limit (4 is the default right now).
-    //
-    //      So, why would this depend on the camera state?  Maybe the camera's current cell, or just the ray's current
-    //      cell, is getting into a bad state?  This feels like it could be a negative distance I'm not handling.
-    //TODO: When a ray reaches the edge of the grid, nextCellDist will be < 0.  All geometry comparisons should fail.
-    //      This could happen even if whichGridCell is inside the grid.  Then hitSomething will remain false, and
-    //      whichGridCell will never get updated!  Infinite loop found!
-    //
-    //      Not quite.  hitSomething starts as false.  It has to get set to true for whichGridCell to not be updated
-    //      which is an end condition for this loop.  When nextCellDist is < 0, I get the position of a ray that went
-    //      backwards.  That doesn't seem great either.  I can see ways that it would be perpetually stuck in the same
-    //      cell.
-    //
-    //      I'm not yet convinced that nextCellDist can actually be < 0.  I think a ray's position would have to be
-    //      outside the grid to make that happen.  I'll keep thinking about this another day.
-    //
-    //      Crash happens even with number of bounces set to 2, but not with number of bounces set to 1.  Seems like
-    //      the problem is a reflected ray near the y cell=0 (along z axis) edge of the grid at large grid x cell.
-    //
-    //      One crash may be triggering as a building on the y cell = 0 edge of the grid just comes into view.  It
-    //      appears to be the farthest building from the origin in z.  Not quite, but the actual farthest building
-    //      is not much farther and small enough that it isn't being reflected off of.
-
-    //TODO: At least check distToNextCell() for correctness against https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/grid
-    //      I think I should also replace it with that "calculate deltaT once" strategy to save some compute power.
-    const float nextCellDist = distToNextCell(gridSize, *thisRay, *whichGridCell);
-    //if(nextCellDist < 0) hitSomething = true; //TODO: This changes where the crash happens but doesn't fix it
+    const float nextCellDist = min(distToNext.x, distToNext.y);
 
     //Intersect boxes in this grid cell if any
     index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
@@ -117,11 +65,19 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     }
 
     //Calculate the next grid cell to test
-    //TODO: Seems like I'm getting stuck in a loop where whichGridCell never changes
-    if(!hitSomething) *whichGridCell = positionToCell(gridSize, thisRay->position + thisRay->direction*nextCellDist);
-    const int newIndex = whichGridCell->x + whichGridCell->y * gridSize.max.x; 
-    if(newIndex == index) hitSomething = true; //TODO: This kludge seems to fix the infinite loop!  That means it is indeed
-                                               //      a ray getting stuck in the same cell.  Why?
+    if(!hitSomething)
+    {
+      if(distToNext.x < distToNext.y)
+      {
+        distToNext.x += distBtwCells.x;
+        whichGridCell->x += dirSign.x;
+      }
+      else
+      {
+        distToNext.y += distBtwCells.y;
+        whichGridCell->y += dirSign.y;
+      }
+    }
   }
 
   //Update thisRay's position to the position where it hit the volume it intersected.

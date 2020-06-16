@@ -6,35 +6,17 @@
 #include "serial/grid.h"
 #endif //NOT_ON_DEVICE
 
-//TODO: The following code only works in OpenCL C
-#ifndef NOT_ON_DEVICE
-float distToNextCell(const grid params, const ray thisRay, const CL(int2) currentCell)
+//Find the distance between intersections along each axis for a given ray.
+CL(float2) distBetweenCells(const grid params, const ray thisRay)
 {
-  //Find distance to the closest of the 4 planes that define this cell
-  //However, the grid's origin doesn't have to be at (0, 0).
-  const CL(float2) dirInv = (CL(float2)){1.f/thisRay.direction.x, 1.f/thisRay.direction.z};
-  const CL(float2) one = (CL(float2)){1.f, 1.f}, epsilon = (CL(float2)){0.001f, 0.001f}; //TODO: Maybe epsilon is the problem?  Scratchapixel doesn't have that.
-  const CL(float2) distancesBack = ((convert_float(currentCell) - epsilon)*params.cellSize + params.origin - thisRay.position.xz) * dirInv;
-  const CL(float2) distancesFront = ((convert_float(currentCell) + one + epsilon)*params.cellSize + params.origin - thisRay.position.xz) * dirInv;
-
-  //Pick the largest distance for each component.  That's the direction thisRay is going.
-  const CL(float2) distances = max(distancesBack, distancesFront);
-
-  //Pick the closest intersection with a cell boundary.  That's the distance to the first cell that thisRay enters.
-  //TODO: I'm getting into an infinite loop at large y with hardEnough.yaml.  Maybe the problem has to do with rays that are
-  //      missing all buildings and leaving the grid?  Seems like that happens at ground level too when I see the background.
-  return min(distances.x, distances.y);
+  return params.cellSize/fabs(thisRay.direction.xz);
 }
 
-//Find the next cell that this ray enters assuming that thisRay already intersects currentCell.
-//TODO: Deprecate this function and just call distToNextCell() + positionToCell()?
-CL(int2) nextCell(const grid params, const ray thisRay, const CL(int2) currentCell)
+//Find distance to the edge of this cell
+CL(float2) distToCellEdge(const grid params, const ray thisRay, const CL(int2) currentCell)
 {
-  const float distToIntersect = distToNextCell(params, thisRay, currentCell);
-
-  return positionToCell(params, thisRay.position + thisRay.direction * distToIntersect);
+  return ((convert_float(currentCell) + step(0.f, thisRay.direction.xz))*params.cellSize + params.origin - thisRay.position.xz)/thisRay.direction.xz;
 }
-#endif //NOT_ON_DEVICE
 
 //Find the grid cell at a position.  This might return a cell that is outside params.
 //If so, try using nextCell with {0, 0} as currentCell.

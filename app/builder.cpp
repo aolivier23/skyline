@@ -175,7 +175,11 @@ int main(const int argc, const char** argv)
     ImGui::CreateContext();
     auto& io = ImGui::GetIO();
 
-    ImGui::StyleColorsDark();
+    //Control what the GUI looks like.
+    ImGui::StyleColorsDark(); //Window background color
+    ImFontConfig biggerFont;
+    biggerFont.SizePixels = 18; //Font size in pixels
+    io.Fonts->AddFontDefault(&biggerFont);
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 420");
