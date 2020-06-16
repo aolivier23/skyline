@@ -54,7 +54,7 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     {
       const int whichBox = boxIndices[whichIndex];
       const float dist = aabb_intersect(geometry + whichBox, *thisRay);
-      if(dist > 0 && dist < min(closestDist, nextCellDist)) //closestDist && dist < nextCellDist)
+      if(dist > 0 && dist < min(closestDist, nextCellDist))
       {
         closestDist = dist;
         *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
