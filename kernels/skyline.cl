@@ -43,7 +43,6 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
          dirSign = {(thisRay->direction.x < 0)?-1.f:1.f, (thisRay->direction.z < 0.f)?-1.f:1.f};
 
   //Grid traversal algorithm from https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/grid
-  //TODO: tx0 and ty0 are different
   while(!hitSomething && whichGridCell->x < gridSize.max.x && whichGridCell->y < gridSize.max.y
         && whichGridCell->x >= 0 && whichGridCell->y >= 0)
   {
@@ -60,23 +59,16 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
         closestDist = dist;
         *normal = aabb_normal_tex_coords(geometry[whichBox], thisRay->position + thisRay->direction*closestDist,
                                          materials[geometry[whichBox].material], &texCoords);
-        hitSomething = true;  //TODO: As soon as I start setting hitSomething to true, I get stuck in what appears to be an infinite loop
+        hitSomething = true;
       }
     }
 
     //Calculate the next grid cell to test
     if(!hitSomething)
     {
-      if(distToNext.x < distToNext.y)
-      {
-        distToNext.x += distBtwCells.x;
-        whichGridCell->x += dirSign.x;
-      }
-      else
-      {
-        distToNext.y += distBtwCells.y;
-        whichGridCell->y += dirSign.y;
-      }
+      //Nasty trick to select a vector component at runtime: step(-nextCellDist, -distToNext)
+      *whichGridCell += convert_int_rtn(step(-nextCellDist, -distToNext)*dirSign);
+      distToNext += step(-nextCellDist, -distToNext)*distBtwCells;
     }
   }
 
