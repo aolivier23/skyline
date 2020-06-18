@@ -9,6 +9,11 @@
  #define M_PI 3.1415926535897932384626433832f
 #endif
 
+float2 signum(const float2 checkSign)
+{
+  return (float2){(checkSign.x < 0)?-1.f:1.f, (checkSign.y < 0.f)?-1.f:1.f};
+}
+
 //Test a ray for intersecting the aabbs in the scene.  Returns texture coordinates by value
 //normal by reference.
 //Updates ray's position but not its direction.
@@ -38,9 +43,7 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
   //Intersect grid cells instead of buildings
   int index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
   bool hitSomething = false; //TODO: Is there a way to structure this loop without another condition?
-  const float2 distBtwCells = distBetweenCells(gridSize, *thisRay);
-  float2 distToNext = distToCellEdge(gridSize, *thisRay, *whichGridCell),
-         dirSign = {(thisRay->direction.x < 0)?-1.f:1.f, (thisRay->direction.z < 0.f)?-1.f:1.f};
+  float2 distToNext = distToCellEdge(gridSize, *thisRay, *whichGridCell);
 
   //Grid traversal algorithm from https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/grid
   while(!hitSomething && whichGridCell->x < gridSize.max.x && whichGridCell->y < gridSize.max.y
@@ -49,8 +52,9 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     const float nextCellDist = min(distToNext.x, distToNext.y);
 
     //Intersect boxes in this grid cell if any
-    index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
-    for(size_t whichIndex = cells[index].begin; whichIndex < cells[index].end; ++whichIndex)
+    const size_t begin = cells[whichGridCell->x + whichGridCell->y * gridSize.max.x].begin,
+                 end = cells[whichGridCell->x + whichGridCell->y * gridSize.max.x].end;
+    for(size_t whichIndex = begin; whichIndex < end; ++whichIndex)
     {
       const int whichBox = boxIndices[whichIndex];
       const float dist = aabb_intersect(geometry + whichBox, *thisRay);
@@ -67,8 +71,8 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     if(!hitSomething)
     {
       //Hack to select the smallest component of a vector component at runtime: step(-nextCellDist, -distToNext)
-      *whichGridCell += convert_int_rtn(step(-nextCellDist, -distToNext)*dirSign);
-      distToNext += step(-nextCellDist, -distToNext)*distBtwCells;
+      *whichGridCell += convert_int_rtn(step(-nextCellDist, -distToNext)*signum(thisRay->direction.xz));
+      distToNext += step(-nextCellDist, -distToNext)*distBetweenCells(gridSize, *thisRay);
     }
   }
 
