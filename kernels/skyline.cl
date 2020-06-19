@@ -42,7 +42,6 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
   }
 
   //Intersect grid cells instead of buildings
-  int index = whichGridCell->x + whichGridCell->y * gridSize.max.x;
   bool hitSomething = false; //TODO: Is there a way to structure this loop without another condition?
   float2 distToNext = distToCellEdge(gridSize, *thisRay, *whichGridCell);
 
@@ -154,8 +153,8 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   //1 pixel per compute unit
   size_t seed = seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)]; //Keep this in private memory as long as possible
   const int2 pixel = (int2)(get_global_id(0), get_global_id(1));
-  
-  const float gamma = 2.2; //TODO: Make this an engine setting
+ 
+  const float gamma = 2.2; //TODO: Make this an engine setting 
 
   float4 pixelColor = pow(read_imagef(prev, sampler, pixel), (float4){gamma, gamma, gamma, 1.f})*(1.f-1.f/(float)iterations); //undo gamma correction
 
@@ -216,8 +215,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
 
   //Reinhard tonemapping to convert HDR colors to LDR.  Divide by number of iterations after tonemapping for iterative
   //camera updates when looking at the same scene for a long time.
-  const float4 ldrColor = (float4){lightColor, 1.f};
-  pixelColor += ldrColor/(ldrColor + (float4){1.f, 1.f, 1.f, 0.f}) / (float)(iterations*nSamplesPerFrame);
+  pixelColor += (float4){lightColor/(lightColor + (float3){1.f, 1.f, 1.f}) / (float)(iterations*nSamplesPerFrame), 1.f};
 
   seeds[get_global_id(0) * get_global_size(1) + get_global_id(1)] = seed; //Update seed for next frame
 

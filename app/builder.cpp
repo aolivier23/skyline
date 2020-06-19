@@ -139,7 +139,12 @@ int main(const int argc, const char** argv)
     //Build OpenCL program
     try
     {
-      program.build();
+      //TODO: Make this optional debug information?  Do this only if NVIDIA compiler options supported?
+      program.build("-cl-nv-verbose -cl-nv-maxrregcount=64"); //This is how I get the NVIDIA compiler to print out resources my kernel uses
+                                                              //TODO: Limiting the registers per thread to 64 makes my kernel a little faster?!
+                                                              //      Setting 65536, the number of registers per block = compute unit, places no limit
+                                                              //      and currently gets me stuck at 83.
+      std::cout << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(chosen);
     }
     catch(const cl::Error& e)
     {
