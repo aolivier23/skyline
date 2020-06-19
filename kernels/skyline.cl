@@ -30,36 +30,6 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
   float3 texCoords = sphere_tex_coords(sky, thisRay->position + thisRay->direction*closestDist);
   *normal = sphere_normal(sky, thisRay->position + thisRay->direction*closestDist);
 
-  //TODO: The ground is emitting light somehow!  I can see that it's the problem by creating a box on the ground,
-  //      observing that it has light inside, and raising that box slowly until it is above the ground.
-  //
-  //      Turning off emission by the sky doesn't help.  The ground must either be emitting light or reflecting the sun.
-  //
-  //      Making the sun red shows that the ground is definitely reflecting the sun's light even from inside a box.
-  //
-  //      Rays don't know the difference between being inside a box and being outside it.  Right now, they're always reflected outwards.
-  //      So why aren't boxes clear?  Rays are reflected about the normal, but they can't ever go through a box.  I think there's a check
-  //      for negative ray direction somewhere that does that.
-  //
-  //      Does this have to do with always hitting the sky by default above?  That would set hitSky to true in the main loop.
-  //
-  //      I think I confirmed that the problem doesn't have to do with weird normals from box reflections by turning number of bounces down to 2
-  //      and still seeing the ground.
-  //
-  //      I guess groundPlane_intersect() could cause this problem if it transported rays into the sky.  Everything looks OK after checking
-  //      some negative signs.  Besides, I'm getting sensible reflections from the sides of buildings.
-  //
-  //      I wonder whether this has anything to do with the grid?  Deciding I'm not in a grid cell would lead to hitting the sky inside
-  //      a building.  But intersections on the sides of the building work correctly from the inside.  Grid cell isn't updated when hitting
-  //      the ground.  That seems like a bug.  It shouldn't ultimately result in a rendering bug, but I'll be it slows down rendering in
-  //      some cases.
-  //
-  //      I vaguely remember noticing light show up inside buildings around the time I was playing with specular reflections.
-  //
-  //TODO: The grid is the problem with the ground.  When a ray strikes the ground, the loop over volumes still happens.  No volumes are struck,
-  //      so closestDist is still the ground.  But whichGridCell walks out of the grid.  The ray just hit the ground, so it won't bounce back to
-  //      it right away.  Since it's outside the grid on its next bounce, it hits the sky.  I could solve this by either running positionToCell()
-  //      at the end of every intersectScene() call or by stopping the loop over volumes when closestDist < distToNext.  I wonder which is faster?
   //Intersect the ground plane
   { //Parentheses to limit the scope of groundDist
     const float groundDist = groundPlane_intersect(*thisRay);
@@ -68,7 +38,6 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
       closestDist = groundDist;
       texCoords = groundPlane_tex_coords(groundTexNorm, thisRay->position + thisRay->direction*closestDist);
       *normal = groundPlane_normal(thisRay->position + thisRay->direction*closestDist);
-      //TODO: If no closer intersection later, update whichGridCell.  So, maybe do ground intersection at the end?
     }
   }
 
@@ -77,6 +46,7 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
   bool hitSomething = false; //TODO: Is there a way to structure this loop without another condition?
   float2 distToNext = distToCellEdge(gridSize, *thisRay, *whichGridCell);
 
+  //TODO: Quit early when the ground plane is closer than nextCellDist
   //Grid traversal algorithm from https://www.scratchapixel.com/lessons/advanced-rendering/introduction-acceleration-structure/grid
   while(!hitSomething && whichGridCell->x < gridSize.max.x && whichGridCell->y < gridSize.max.y
         && whichGridCell->x >= 0 && whichGridCell->y >= 0)
@@ -100,12 +70,9 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     }
 
     //Calculate the next grid cell to test
-    /*if(!hitSomething)
-    {*/
-      //Hack to select the smallest component of a vector component at runtime: step(-nextCellDist, -distToNext)
-      *whichGridCell += convert_int_rtn(step(-nextCellDist, -distToNext)*signum(thisRay->direction.xz));
-      distToNext += step(-nextCellDist, -distToNext)*distBetweenCells(gridSize, *thisRay);
-    //}
+    //Hack to select the smallest component of a vector component at runtime: step(-nextCellDist, -distToNext)
+    *whichGridCell += convert_int_rtn(step(-nextCellDist, -distToNext)*signum(thisRay->direction.xz));
+    distToNext += step(-nextCellDist, -distToNext)*distBetweenCells(gridSize, *thisRay);
   }
 
 
