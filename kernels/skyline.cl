@@ -54,9 +54,8 @@ float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSiz
     const float nextCellDist = min(distToNext.x, distToNext.y);
 
     //Intersect boxes in this grid cell if any
-    const size_t begin = cells[whichGridCell->x + whichGridCell->y * gridSize.max.x].begin,
-                 end = cells[whichGridCell->x + whichGridCell->y * gridSize.max.x].end;
-    for(size_t whichIndex = begin; whichIndex < end; ++whichIndex)
+    for(size_t whichIndex = cells[whichGridCell->x + whichGridCell->y * gridSize.max.x].begin;
+        whichIndex < cells[whichGridCell->x + whichGridCell->y * gridSize.max.x].end; ++whichIndex)
     {
       const int whichBox = boxIndices[whichIndex];
       const float dist = aabb_intersect(geometry + whichBox, *thisRay);
