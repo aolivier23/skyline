@@ -469,6 +469,7 @@ namespace app
     fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
     fDevGridIndices = cl::Buffer(ctx, fBoxIndices.begin(), fBoxIndices.end(), false);
+    fDevLocalGridIndices = cl::Local(fBoxIndices.size()*sizeof(cl_int));
     fDevGridCells = cl::Buffer(ctx, fGridCells.begin(), fGridCells.end(), false);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, fTextures->name);

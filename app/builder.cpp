@@ -79,13 +79,14 @@ int main(const int argc, const char** argv)
       glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    auto window = glfwCreateWindow(800, 600, "Skyline Builder", nullptr, nullptr);
+    auto window = glfwCreateWindow(1500, 1000, "Skyline Builder", glfwGetPrimaryMonitor(), nullptr); //nullptr, nullptr); //800, 600, "Skyline Builder", nullptr, nullptr);
     if(window == nullptr)
     {
       std::cerr << "I managed to initialize GLFW, but I couldn't create a window with an OpenGL context."
                 << "  There's nothing I can do, so returning with an error.\n";
       return SETUP_ERROR;
     }
+    //glfwMaximizeWindow(window);
 
     glfwMakeContextCurrent(window);
 
@@ -161,7 +162,7 @@ int main(const int argc, const char** argv)
       return SETUP_ERROR;
     }
 
-    auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, cl::Buffer, cl::Buffer, grid, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
+    auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, int, cl::Buffer, grid, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
 
     //Set up viewport
     int width, height;
@@ -210,9 +211,10 @@ int main(const int argc, const char** argv)
       {
         std::vector<cl::Memory> mem = {*(change.glImage), geom.textures()};
         queue.enqueueAcquireGLObjects(&mem);
-        pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight)),
+        std::cout << "Using " << std::gcd(change.fWidth, change.fHeight) << " work groups, which is the GCD of " << change.fWidth << " and " << change.fHeight << ".\n";
+        pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight), cl::NDRange(std::gcd(change.fWidth, change.fHeight), 1)),
                   *(change.glImage), sampler, *(change.clImage),
-                  geom.boxes(), geom.gridIndices(), geom.gridCells(),
+                  geom.boxes(), geom.gridIndices(), geom.localGridIndices(), geom.nGridIndices(), geom.gridCells(),
                   geom.gridSize(), geom.materials(),
                   geom.sky(), geom.sun(), geom.sunEmission().data,
                   geom.groundTexNorm().data, change.camera().state(),

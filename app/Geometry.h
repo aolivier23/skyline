@@ -68,6 +68,8 @@ namespace app
       inline grid& gridSize() { return fGridSize; }
       inline const cl::Buffer& gridCells() const { return fDevGridCells; }
       inline const cl::Buffer& gridIndices() const { return fDevGridIndices; }
+      inline const cl::LocalSpaceArg& localGridIndices() const { return fDevLocalGridIndices; }
+      inline const int nGridIndices() const { return fBoxIndices.size(); }
 
       //Custom exception class to explain why the command line couldn't be parsed.
       //TODO: Derive from app::exception?
@@ -140,6 +142,7 @@ namespace app
       cl::Buffer fDevGridCells;
       cl::Buffer fDevGridIndices; //N.B.: fGridIndices are necessary so that each gridCell can refer to a contiguous range of elements
                                //      and multiple gridCells can refer to a given box.
+      cl::LocalSpaceArg fDevLocalGridIndices;
 
       //Helper functions
       //Group a collection of boxes into 2D gridCells.  Returns the grid's size, the gridCells, and
