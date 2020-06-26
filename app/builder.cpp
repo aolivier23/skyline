@@ -162,7 +162,7 @@ int main(const int argc, const char** argv)
       return SETUP_ERROR;
     }
 
-    auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, int, cl::Buffer, grid, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
+    auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, cl::LocalSpaceArg, int, cl::Buffer, cl::LocalSpaceArg, int, cl::Buffer, cl::LocalSpaceArg, grid, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
 
     //Set up viewport
     int width, height;
@@ -211,10 +211,9 @@ int main(const int argc, const char** argv)
       {
         std::vector<cl::Memory> mem = {*(change.glImage), geom.textures()};
         queue.enqueueAcquireGLObjects(&mem);
-        std::cout << "Using " << std::gcd(change.fWidth, change.fHeight) << " work groups, which is the GCD of " << change.fWidth << " and " << change.fHeight << ".\n";
         pathTrace(cl::EnqueueArgs(queue, cl::NDRange(change.fWidth, change.fHeight), cl::NDRange(std::gcd(change.fWidth, change.fHeight), 1)),
                   *(change.glImage), sampler, *(change.clImage),
-                  geom.boxes(), geom.gridIndices(), geom.localGridIndices(), geom.nGridIndices(), geom.gridCells(),
+                  geom.boxes(), geom.localBoxes(), geom.nBoxes(), geom.gridIndices(), geom.localGridIndices(), geom.nGridIndices(), geom.gridCells(), geom.localGridCells(),
                   geom.gridSize(), geom.materials(),
                   geom.sky(), geom.sun(), geom.sunEmission().data,
                   geom.groundTexNorm().data, change.camera().state(),

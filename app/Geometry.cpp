@@ -467,10 +467,12 @@ namespace app
     //Synchronize GPU data with the CPU
     //fGridSize = size;
     fDevBoxes = cl::Buffer(ctx, fBoxes.begin(), fBoxes.end(), false);
+    fDevLocalBoxes = cl::Local(fBoxes.size()*sizeof(aabb));
     fDevMaterials = cl::Buffer(ctx, fMaterials.begin(), fMaterials.end(), false);
     fDevGridIndices = cl::Buffer(ctx, fBoxIndices.begin(), fBoxIndices.end(), false);
     fDevLocalGridIndices = cl::Local(fBoxIndices.size()*sizeof(cl_int));
     fDevGridCells = cl::Buffer(ctx, fGridCells.begin(), fGridCells.end(), false);
+    fDevLocalGridCells = cl::Local(fGridCells.size()*sizeof(gridCell));
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, fTextures->name);
     fDevTextures = cl::ImageGL(ctx, CL_MEM_READ_ONLY, GL_TEXTURE_2D_ARRAY, 0, fTextures->name);

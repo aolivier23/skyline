@@ -18,7 +18,7 @@ float2 signum(const float2 checkSign)
 //Test a ray for intersecting the aabbs in the scene.  Returns texture coordinates by value
 //normal by reference.
 //Updates ray's position but not its direction.
-float3 intersectScene(ray* thisRay, __global gridCell* cells, const grid gridSize, __global aabb* geometry, __local int* boxIndices,
+float3 intersectScene(ray* thisRay, __local gridCell* cells, const grid gridSize, __local aabb* geometry, __local int* boxIndices,
                       __global material* materials, float3* normal, const float2 groundTexNorm, sphere sky, int2* whichGridCell)
 {
   //Intersect the sky
@@ -142,8 +142,9 @@ float3 sampleSky(const sphere sky, const sphere sun, const float3 sunEmission, c
   return maskColor * pow(skyColor.xyz, (float3){gamma, gamma, gamma});
 }
 
-__kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry,
-                        __global int* boxIndices, __local int* localBoxIndices, const int nBoxIndices, __global gridCell* gridCells, const grid gridSize, __global material* materials,
+__kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_only image2d_t pixels, __global aabb* geometry, __local aabb* localGeometry, const int nBoxes,
+                        __global int* boxIndices, __local int* localBoxIndices, const int nBoxIndices,
+                        __global gridCell* gridCells, __local gridCell* localGridCells, const grid gridSize, __global material* materials,
                         const sphere sky, const sphere sun, const float3 sunEmission, const float2 groundTexNorm, const camera cam,
                         const int nBounces, __global size_t* seeds, const int iterations, const int nSamplesPerFrame,
                         __read_only image2d_array_t textures, sampler_t textureSampler)
@@ -153,6 +154,16 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
   for(int whichBoxIndex = start; whichBoxIndex < nBoxIndices; whichBoxIndex += stride)
   {
     localBoxIndices[whichBoxIndex] = boxIndices[whichBoxIndex];
+  }
+
+  for(int whichCell = start; whichCell < gridSize.max.x * gridSize.max.y; whichCell += stride)
+  {
+    localGridCells[whichCell] = gridCells[whichCell];
+  }
+
+  for(int whichBox = start; whichBox < nBoxes; whichBox += stride)
+  {
+    localGeometry[whichBox] = geometry[whichBox];
   }
 
   barrier(CLK_LOCAL_MEM_FENCE);
@@ -193,7 +204,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
     }
 
     //Always intersect the scene at least once
-    texCoords = intersectScene(&localRay, gridCells, gridSize, geometry, localBoxIndices, materials, &normal, groundTexNorm, sky, &whichGridCell);
+    texCoords = intersectScene(&localRay, localGridCells, gridSize, localGeometry, localBoxIndices, materials, &normal, groundTexNorm, sky, &whichGridCell);
     hitSky = (texCoords.z == SKY_TEXTURE);
 
     //For each bounce of this ray around the scene.  Stop when I hit the only light source, the sky,
@@ -207,7 +218,7 @@ __kernel void pathTrace(__read_only image2d_t prev, sampler_t sampler, __write_o
 
       //Otherwise, scatter this ray off of whatever it hit and intersect the scene again
       scatterAndShade(&localRay, &lightColor, &maskColor, &seed, normal, texCoords, textures, textureSampler, gamma);
-      texCoords = intersectScene(&localRay, gridCells, gridSize, geometry, localBoxIndices, materials, &normal, groundTexNorm, sky, &whichGridCell);
+      texCoords = intersectScene(&localRay, localGridCells, gridSize, localGeometry, localBoxIndices, materials, &normal, groundTexNorm, sky, &whichGridCell);
       hitSky = (texCoords.z == SKY_TEXTURE);
     }
 

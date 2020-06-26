@@ -27,7 +27,7 @@ typedef struct aabb_tag
 
 //OpenCL functions for intersection tests of aabbs
 //Return the distance from thisRay's origin to its intersection with shape
-float aabb_intersect(__global const aabb* shape, const ray thisRay);
+float aabb_intersect(__local const aabb* shape, const ray thisRay);
 
 //Return the normal vector at a point on shape 
 CL(float3) aabb_normal(const aabb shape, const CL(float3) pos);

@@ -10,7 +10,7 @@
 
 //OpenCL functions for intersection tests of aabbs
 //Return the distance from thisRay's origin to its intersection with shape
-float aabb_intersect(__global const aabb* shape, const ray thisRay)
+float aabb_intersect(__local const aabb* shape, const ray thisRay)
 {
   const CL(float3) diff = thisRay.position - shape->center;
   const CL(float3) dirInv = (CL(float3)){1.f/thisRay.direction.x, 1.f/thisRay.direction.y, 1.f/thisRay.direction.z};

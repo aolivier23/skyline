@@ -57,6 +57,7 @@ namespace app
       //Application handles to data on the GPU
       inline const cl::Buffer& materials() const { return fDevMaterials; }
       inline const cl::Buffer& boxes() const { return fDevBoxes; }
+      inline const cl::LocalSpaceArg& localBoxes() const { return fDevLocalBoxes; }
       inline sphere& sky() { return fSky; }
       inline sphere& sun() { return fSun; }
       inline cl::float2& groundTexNorm() { return fGroundTexNorm; }
@@ -67,6 +68,7 @@ namespace app
       inline size_t nBoxes() const { return fBoxes.size(); }
       inline grid& gridSize() { return fGridSize; }
       inline const cl::Buffer& gridCells() const { return fDevGridCells; }
+      inline const cl::LocalSpaceArg& localGridCells() const { return fDevLocalGridCells; }
       inline const cl::Buffer& gridIndices() const { return fDevGridIndices; }
       inline const cl::LocalSpaceArg& localGridIndices() const { return fDevLocalGridIndices; }
       inline const int nGridIndices() const { return fBoxIndices.size(); }
@@ -138,8 +140,10 @@ namespace app
       //Data on the GPU
       cl::Buffer fDevMaterials;
       cl::Buffer fDevBoxes;
+      cl::LocalSpaceArg fDevLocalBoxes;
       cl::ImageGL fDevTextures;
       cl::Buffer fDevGridCells;
+      cl::LocalSpaceArg fDevLocalGridCells;
       cl::Buffer fDevGridIndices; //N.B.: fGridIndices are necessary so that each gridCell can refer to a contiguous range of elements
                                //      and multiple gridCells can refer to a given box.
       cl::LocalSpaceArg fDevLocalGridIndices;
