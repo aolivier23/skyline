@@ -1,0 +1,1280 @@
+geometry:
+  defaultBox_copy_copy_copy:
+    width:
+      - 0.3
+      - 5
+      - 0.7
+    center:
+      - -0.4975501
+      - 0
+      - -1.291397
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy:
+    width:
+      - 0.1
+      - 0.1
+      - 0.1
+    center:
+      - 0.6114569
+      - 0
+      - -1.676056
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy:
+    width:
+      - 0.3
+      - 4.2
+      - 0.3
+    center:
+      - 0.1951083
+      - 0
+      - -0.2700816
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox:
+    width:
+      - 0.3
+      - 3
+      - 0.3
+    center:
+      - -0.02172479
+      - 0
+      - -0.664973
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  myFirstBox:
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.2
+      - 0.3
+    center:
+      - -0.5
+      - 0.1
+      - -0.3
+    width:
+      - 0.1
+      - 0.2
+      - 0.3
+  defaultBox_copy_copy:
+    material: glass
+    width:
+      - 0.5
+      - 1.7
+      - 0.3
+    center:
+      - 0.4576131
+      - 0
+      - -1.240462
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.9
+      - 3
+      - 0.4
+    center:
+      - 0.3585436
+      - 0
+      - -3.927518
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1.5
+      - 2
+      - 1
+    center:
+      - -0.8310465
+      - 0
+      - -4.523597
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 5
+      - 1
+    center:
+      - 2.390543
+      - 0
+      - -4.586184
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 4
+      - 1
+    center:
+      - 2.410617
+      - 0
+      - -3.574726
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 12
+      - 1
+    center:
+      - 3.427366
+      - 0
+      - -3.590521
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 6
+      - 1
+    center:
+      - 3.450141
+      - 0
+      - -4.641778
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 7
+      - 1
+    center:
+      - 4.427176
+      - 0
+      - -4.649259
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 9
+      - 1
+    center:
+      - 4.41047
+      - 0
+      - -3.605599
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 5
+      - 1
+    center:
+      - 4.370366
+      - 0
+      - -2.630183
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 4
+      - 1
+    center:
+      - 3.423795
+      - 0
+      - -2.588138
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 3
+      - 1
+    center:
+      - 2.410444
+      - 0
+      - -2.617741
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.5
+      - 1.2
+      - 0.3
+    center:
+      - 2.927697
+      - 0
+      - 8.090503
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 3
+      - 2
+      - 2
+    center:
+      - 3.425301
+      - 0
+      - 3.912346
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 2
+      - 3
+      - 1
+    center:
+      - 3.944901
+      - 0
+      - 2.418611
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.95
+      - 1
+      - 1
+    center:
+      - -3.403232
+      - 0
+      - 4.435231
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 2
+      - 3
+      - 0.95
+    center:
+      - -3.978647
+      - 0
+      - 3.362812
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 1.5
+      - 1
+    center:
+      - -4.520976
+      - 0
+      - 4.421009
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.8
+      - 2
+      - 2
+    center:
+      - -2.447566
+      - 0
+      - 3.80893
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 3
+      - 4
+      - 0.8
+    center:
+      - -3.575483
+      - 0
+      - 2.418622
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 2
+      - 5
+      - 0.5
+    center:
+      - 3.788177
+      - 0
+      - 0.9359202
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 2
+      - 6
+      - 1.4
+    center:
+      - 3.8
+      - 0
+      - 0.005
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 2
+      - 5
+      - 0.5
+    center:
+      - 3.8
+      - 0
+      - -0.9
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 3
+      - 1
+      - 3
+    center:
+      - -3.486987
+      - 0
+      - -3.551643
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 2
+      - 1
+    center:
+      - -3.531893
+      - 0
+      - 0.9149234
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 1.8
+      - 1
+    center:
+      - -4.595971
+      - 0
+      - 0.9526975
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 3
+      - 1
+    center:
+      - -2.410808
+      - 0
+      - 0.909067
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.3
+      - 3
+      - 0.3
+    center:
+      - -0.6998664
+      - 0
+      - 1.45365
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.1
+      - 2
+      - 1.5
+    center:
+      - -1.689365
+      - 0
+      - -0.6078345
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.3
+      - 1.2
+      - 0.3
+    center:
+      - -0.6380144
+      - 0
+      - 1.783456
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.2
+      - 4
+      - 0.3
+    center:
+      - -0.8234866
+      - 0
+      - -0.3659881
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1.6
+      - 5
+      - 1
+    center:
+      - 0.798793
+      - 0
+      - -4.587945
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.3
+      - 5
+      - 0.2
+    center:
+      - 1.278669
+      - 0
+      - -0.3850406
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.2
+      - 7
+      - 0.4
+    center:
+      - -1.143396
+      - 0
+      - 1.463914
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 4
+      - 1
+    center:
+      - 2.196799
+      - 0
+      - 0.9292319
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  anotherBox:
+    width:
+      - 0.3
+      - 0.6
+      - 0.2
+    center:
+      - 0.6
+      - 0.3
+      - -0.1
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy:
+    width:
+      - 0.3
+      - 7
+      - 0.2
+    center:
+      - -0.1974154
+      - 0
+      - -0.1848333
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.4
+      - 6.2
+      - 0.2
+    center:
+      - -0.06218949
+      - 0
+      - 1.218003
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.5
+      - 3
+      - 1.2
+    center:
+      - 2.541706
+      - 0
+      - 2.101298
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    center:
+      - 0.4259515
+      - 0
+      - 1.548085
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+    width:
+      - 0.3
+      - 12
+      - 0.2
+  defaultBox_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.3
+      - 5
+      - 0.2
+    center:
+      - 0.8246524
+      - 0
+      - -1.072586
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    center:
+      - 1.015868
+      - 0
+      - 1.718305
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+    width:
+      - 0.7
+      - 3
+      - 0.3
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.7
+      - 6
+      - 0.7
+    center:
+      - 2.189154
+      - 0
+      - -0.1278387
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 6
+      - 0.6
+    center:
+      - -1.460782
+      - 0
+      - 0.6165913
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.3
+      - 4
+      - 0.3
+    center:
+      - -1.566876
+      - 0
+      - 1.282836
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.2
+      - 6
+      - 0.2
+    center:
+      - -1.376917
+      - 0
+      - -2.192459
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 3
+      - 0.6
+    center:
+      - -0.965664
+      - 0
+      - -2.617083
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 3
+      - 0.6
+    center:
+      - 0.2313607
+      - 0
+      - -2.75709
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 4
+      - 0.9
+    center:
+      - -1.060926
+      - 0
+      - -3.498594
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.4
+      - 2
+      - 0.6
+    center:
+      - -0.2649536
+      - 0
+      - -3.424625
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.9
+      - 2
+      - 1
+    center:
+      - 1.199837
+      - 0
+      - -3.207898
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 0.9
+      - 1
+    center:
+      - -3.478996
+      - 0
+      - -1
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 0.5
+      - 1
+    center:
+      - -2.48045
+      - 0
+      - -1.026427
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 0.7
+      - 1
+    center:
+      - -4.566048
+      - 0
+      - -1.052008
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 2
+      - 1
+    center:
+      - -4.577031
+      - 0
+      - -0.05736062
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.5
+      - 1
+      - 0.6
+    center:
+      - -1.359219
+      - 0
+      - 7.880219
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 3
+      - 1
+    center:
+      - -2.421981
+      - 0
+      - -0.03784046
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 8
+      - 1
+    center:
+      - 1.065611
+      - 0
+      - 2.538543
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 8
+      - 1
+    center:
+      - -1.022812
+      - 0
+      - 2.475749
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 2
+      - 6
+      - 1
+    center:
+      - -0.004672348
+      - 0
+      - 3.61035
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 6
+      - 0.8
+    center:
+      - -1.279766
+      - 0
+      - 4.501078
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1
+      - 4
+      - 0.8
+    center:
+      - 1.038897
+      - 0
+      - 4.49881
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 3
+      - 2
+      - 2
+    center:
+      - 3.469667
+      - 0
+      - 6.475347
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 3
+      - 2
+      - 2
+    center:
+      - 0.004715323
+      - 0
+      - 6.449031
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.8
+      - 3
+      - 1
+    center:
+      - 1.130749
+      - 0
+      - 7.936394
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.8
+      - 2
+      - 0.5
+    center:
+      - 0.1745366
+      - 0
+      - 7.94698
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.5
+      - 3
+      - 0.7
+    center:
+      - -0.7211332
+      - 0
+      - 7.793663
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 3
+      - 2
+      - 2
+    center:
+      - -3.546497
+      - 0
+      - 6.458589
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.5
+      - 1.5
+      - 0.4
+    center:
+      - -2.247884
+      - 0
+      - 8.158342
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.5
+      - 3
+      - 0.3
+    center:
+      - -2.177801
+      - 0
+      - 7.678488
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.6
+      - 2
+      - 0.75
+    center:
+      - -2.818998
+      - 0
+      - 7.894981
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 2
+      - 2
+      - 0.8
+    center:
+      - -4.123608
+      - 0
+      - 7.917303
+    material: marble
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.7
+      - 2
+      - 0.4
+    center:
+      - 4.738596
+      - 0
+      - 7.766505
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.8
+      - 3
+      - 0.3
+    center:
+      - 3.376496
+      - 0
+      - 7.731573
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.4
+      - 1
+      - 0.4
+    center:
+      - 3.462742
+      - 0
+      - 8.13175
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.6
+      - 2.5
+      - 0.4
+    center:
+      - 4.006869
+      - 0
+      - 8.152506
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 0.6
+      - 4
+      - 0.8
+    center:
+      - 2.322952
+      - 0
+      - 7.914898
+    material: bricks
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+  defaultBox_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy:
+    width:
+      - 1.5
+      - 8
+      - 1
+    center:
+      - 0.8223623
+      - 0
+      - 0.7043589
+    material: glass
+    texNorm:
+      - 0.1
+      - 0.1
+      - 0.1
+grid:
+  - 5
+  - 5
+sky: /home/aolivier/app/graphics/skyline/debug/include/examples/1024x512/small_harbor_02_1k.hdr
+ground:
+  file: 1024x512/StoneStreetIntersection.png
+  texNorm:
+    - 3.5
+    - 3.5
+cameras:
+  default:
+    position:
+      - -0.2000001
+      - 3.3
+      - 1.2
+    focal:
+      - -0.6245693
+      - 2.509121
+      - 1.265722
+  Overview:
+    position:
+      - 0
+      - 8
+      - 0
+    focal:
+      - 0.007786829
+      - 7.100201
+      - -0.01908068
+  Downtown:
+    position:
+      - 0.04999999
+      - 0.3
+      - 0.15
+    focal:
+      - -0.3405258
+      - 0.8846707
+      - 0.7118854
+  Alley:
+    position:
+      - -0.3999999
+      - 0.3
+      - 7.550011
+    focal:
+      - 0.391538
+      - 0.721321
+      - 7.627629
+  Courtyard:
+    position:
+      - -2.999998
+      - 0.3
+      - 0.2500001
+    focal:
+      - -3.86479
+      - 0.5467542
+      - 0.2137477
+  Apartments:
+    position:
+      - -6.705523e-08
+      - 0.3
+      - -3.699998
+    focal:
+      - 0.6548252
+      - 0.8099409
+      - -3.351817
+  Rooftop:
+    position:
+      - -0.2000001
+      - 3.3
+      - 1.2
+    focal:
+      - -0.6426802
+      - 2.932659
+      - 0.5077847
+sun:
+  color:
+    - 20
+    - 16
+    - 12
+  center:
+    - 7.071068
+    - 7.071068
+    - 0
+  radius: 2
+materials:
+  glass:
+    emission:
+      - 0
+      - 0
+      - 0
+    left: 1024x512/glassBuilding.png
+    right: 1024x512/glassBuilding.png
+    back: 1024x512/glassBuilding.png
+    top: 1024x512/testBuildingRoof.png
+    bottom: 1024x512/testBuildingRoof.png
+    front: 1024x512/glassBuilding.png
+  marble:
+    left: 1024x512/MarbleBuilding.png
+    right: 1024x512/MarbleBuilding.png
+    top: 1024x512/roof.png
+    back: 1024x512/MarbleBuilding.png
+    bottom: 1024x512/roof.png
+    front: 1024x512/MarbleBuilding.png
+    emission:
+      - 0
+      - 0
+      - 0
+  bricks:
+    bottom: 1024x512/JustBricks.png
+    front: 1024x512/JustBricks.png
+    left: 1024x512/JustBricks.png
+    right: 1024x512/JustBricks.png
+    top: 1024x512/JustBricks.png
+    back: 1024x512/JustBricks.png
+    emission:
+      - 0
+      - 0
+      - 0
