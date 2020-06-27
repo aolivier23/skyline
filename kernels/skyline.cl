@@ -51,6 +51,7 @@ float3 intersectScene(ray* thisRay, __local gridCell* cells, const grid gridSize
         && whichGridCell->x >= 0 && whichGridCell->y >= 0)
   {
     const float nextCellDist = min(distToNext.x, distToNext.y);
+    if(closestDist < nextCellDist) hitSomething = true; //TODO: This is a very slow way to make sure I stop traversing cells when I hit the ground plane
 
     //Intersect boxes in this grid cell if any
     for(size_t whichIndex = cells[whichGridCell->x + whichGridCell->y * gridSize.max.x].begin;
@@ -69,15 +70,16 @@ float3 intersectScene(ray* thisRay, __local gridCell* cells, const grid gridSize
 
     //Calculate the next grid cell to test
     //Hack to select the smallest component of a vector component at runtime: step(-nextCellDist, -distToNext)
-    *whichGridCell += convert_int_rtn(step(-nextCellDist, -distToNext)*signum(thisRay->direction.xz));
-    distToNext += step(-nextCellDist, -distToNext)*distBetweenCells(gridSize, *thisRay);
+    if(!hitSomething)
+    {
+      *whichGridCell += convert_int_rtn(step(-nextCellDist, -distToNext)*signum(thisRay->direction.xz));
+      distToNext += step(-nextCellDist, -distToNext)*distBetweenCells(gridSize, *thisRay);
+    }
   }
 
 
   //Update thisRay's position to the position where it hit the volume it intersected.
   thisRay->position = thisRay->position + thisRay->direction*closestDist;
-  *whichGridCell = positionToCell(gridSize, thisRay->position);
-
   *normal = (dot(*normal, thisRay->direction) < 0)?*normal:-*normal;
 
   //Make sure I don't intersect the same volume again.

@@ -34,7 +34,6 @@ float grid_intersect(const grid rect, const ray thisRay)
 
   //X
   int sign = (dirInv.x > 0)?1:-1;
-  //TODO: shape->width needs to be replaced
   float tmin = (-sign * rect.max.x * rect.cellSize.x/2.f - diff.x)*dirInv.x;
   float tmax = (sign * rect.max.x * rect.cellSize.x/2.f - diff.x)*dirInv.x;
 
