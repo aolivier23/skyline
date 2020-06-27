@@ -7,6 +7,7 @@ be suitable for rendering both from ground level and from roof-top
 level.
 
 ##Where to next:
+- How to fix ground intersection: find grid cell of ground intersection and loop over cells until min(groundCell, cellSize.max)
 - Test cases where grid acceleration structure will excel
   - Model city blocks of buildings
   - Want most buildings in 1 grid cell
@@ -70,6 +71,9 @@ level.
     - Goal: Streetlights in a night scene
     - Emitted light in building textures
   - On last bounce, redirect rays to sky?  Should work well except under awnings etc.
+- Game idea: Drone wars
+  - Need to render user model in many different cells quickly.  So, don't put it in a cell.  Perhaps I have a hook in the engine to pass in a userModel() function?  It doesn't get intersected on the first test but is the first intersection on each bounce
+  - Or I could just deliver amazon packages during the Coronavirus pandemic.  That way, I don't have to render people outside.
 
 ##Planned Features:
 
