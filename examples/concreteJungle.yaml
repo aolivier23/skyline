@@ -1162,8 +1162,8 @@ geometry:
       - 0.1
       - 0.1
 grid:
-  - 5
-  - 5
+  - 3
+  - 4
 sky: /home/aolivier/app/graphics/skyline/debug/include/examples/1024x512/small_harbor_02_1k.hdr
 ground:
   file: 1024x512/StoneStreetIntersection.png

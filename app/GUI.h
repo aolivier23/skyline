@@ -42,7 +42,8 @@ namespace app
   //the number of bounces per frame and number of samples per frame.
   //Returns true if and only if engine parameters changed and the scene needs
   //to be updated.
-  bool drawEngine(eng::WithRandomSeeds& engine);
+  //TODO: Put these cl:: objects into Engine?
+  bool drawEngine(eng::WithRandomSeeds& engine, const cl::Device& gpu, const cl::Program& prog, const cl::Kernel& pathTracer);
 
   //Show a window displaying details of the grid acceleration structure like
   //the camera's current grid cell and the grid cell of the most recently selected

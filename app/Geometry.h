@@ -73,6 +73,10 @@ namespace app
       inline const cl::LocalSpaceArg& localGridIndices() const { return fDevLocalGridIndices; }
       inline const int nGridIndices() const { return fBoxIndices.size(); }
 
+      //Application handles to CPU versions of GPU data
+      inline const std::vector<gridCell>& hostGridCells() const { return fGridCells; }
+      inline const std::vector<int>& hostBoxIndices() const { return fBoxIndices; }
+
       //Custom exception class to explain why the command line couldn't be parsed.
       //TODO: Derive from app::exception?
       class exception: public std::runtime_error

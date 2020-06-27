@@ -364,7 +364,7 @@ namespace app
     return false;
   }
 
-  bool drawEngine(eng::WithRandomSeeds& engine)
+  bool drawEngine(eng::WithRandomSeeds& engine, const cl::Device& gpu, const cl::Program& prog, const cl::Kernel& pathTracer)
   {
     static bool isOpen = false;
     const bool clicked = ImGui::MenuItem("engine");
@@ -378,6 +378,22 @@ namespace app
       if(ImGui::InputInt("Bounces per Frame", &engine.nBounces(), ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
       if(ImGui::InputInt("Latency", &engine.latency(), ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
       if(ImGui::InputInt("Samples per Frame", &engine.nSamples(), ImGuiInputTextFlags_EnterReturnsTrue)) changed = true;
+      if(ImGui::CollapsingHeader("Kernel Info"))
+      {
+        ImGui::LabelText("Local Memory:", "%lu bytes / %lu bytes", pathTracer.getWorkGroupInfo<CL_KERNEL_LOCAL_MEM_SIZE>(gpu), gpu.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>());
+
+        /*int global_var_size;
+        prog.getBuildInfo(gpu, CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE, &global_var_size);
+        ImGui::LabelText("Global Memory:", "%i / %lu", global_var_size, gpu.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>());*/
+
+        int global_work_size;
+        pathTracer.getWorkGroupInfo(gpu, CL_KERNEL_GLOBAL_WORK_SIZE, &global_work_size);
+        int private_mem_size;
+        pathTracer.getWorkGroupInfo(gpu, CL_KERNEL_PRIVATE_MEM_SIZE, &private_mem_size);
+        ImGui::LabelText("Private Memory:", "%i bytes", private_mem_size / global_work_size);
+        ImGui::LabelText("Total Work Items:", "%i", global_work_size);
+        ImGui::LabelText("Work Items per Work Group:", "%lu", pathTracer.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(gpu));
+      }
       ImGui::End();
     }
 
@@ -402,6 +418,37 @@ namespace app
       //Setting a number of grid cells < 1 is disastrous for the grid generation stage.
       if(geom.gridSize().max.x < 1) geom.gridSize().max.x = 1;
       if(geom.gridSize().max.y < 1) geom.gridSize().max.y = 1;
+
+      //Histogram number of boxes in each grid cell
+      std::unordered_map<int, int> nBoxesPerCell;
+      int max = std::numeric_limits<int>::min();
+      for(const auto& cell: geom.hostGridCells())
+      {
+        max = std::max(max, cell.end - cell.begin);
+        nBoxesPerCell[cell.end - cell.begin]++;
+      }
+
+      std::vector<float> bins(max + 1);
+      for(auto& bin: nBoxesPerCell) bins[bin.first] = bin.second;
+
+      ImGui::PlotHistogram("Boxes per Cell", bins.data(), bins.size());
+
+      //Histogram number of grid cells each box is in
+      std::unordered_map<int, int> nCellsPerBox;
+      max = std::numeric_limits<int>::min();
+      for(const auto index: geom.hostBoxIndices())
+      {
+        nCellsPerBox[index]++;
+        max = std::max(max, nCellsPerBox[index]);
+      }
+
+      std::vector<float> cellsPerBoxBins(max + 1);
+      for(auto& bin: nCellsPerBox) cellsPerBoxBins[bin.second]++;
+
+      ImGui::PlotHistogram("Cells per Box", cellsPerBoxBins.data(), cellsPerBoxBins.size());
+
+      ImGui::LabelText("Total Boxes:", "%lu", geom.nBoxes());
+
       ImGui::End();
     }
 

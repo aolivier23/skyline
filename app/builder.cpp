@@ -162,7 +162,8 @@ int main(const int argc, const char** argv)
       return SETUP_ERROR;
     }
 
-    auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, cl::LocalSpaceArg, int, cl::Buffer, cl::LocalSpaceArg, int, cl::Buffer, cl::LocalSpaceArg, grid, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(cl::Kernel(program, "pathTrace"));
+    cl::Kernel kernel(program, "pathTrace");
+    auto pathTrace = cl::make_kernel<cl::ImageGL, cl::Sampler, cl::Image2D, cl::Buffer, cl::LocalSpaceArg, int, cl::Buffer, cl::LocalSpaceArg, int, cl::Buffer, cl::LocalSpaceArg, grid, cl::Buffer, sphere, sphere, cl_float3, cl_float2, camera, int, cl::Buffer, int, int, cl::ImageGL, cl::Sampler>(kernel);
 
     //Set up viewport
     int width, height;
@@ -256,7 +257,7 @@ int main(const int argc, const char** argv)
 
           if(app::drawGrid(geom)) geom.sendToGPU(ctx);
           if(app::drawBackground(geom)) change.onCameraChange();
-          if(app::drawEngine(change)) change.onCameraChange();
+          if(app::drawEngine(change, chosen, program, kernel)) change.onCameraChange();
           ImGui::EndMainMenuBar();
 
           if(selection)
