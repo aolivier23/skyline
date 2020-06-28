@@ -105,6 +105,7 @@ void scatterAndShade(ray* thisRay, float3* lightColor, float3* maskColor, size_t
   const float4 color = pow(read_imagef(textures, textureSampler, (float4){texCoords, 0.}), (float4){gamma, gamma, gamma, 1.f});
 
   //TODO: Fresnel equation: the fraction of light that is reflected or transmmitted depends on direction.
+  //      Schlick's approximation might be a good start: https://en.wikipedia.org/wiki/Schlick%27s_approximation
   //Do specular reflections color.w percent of the time and diffuse otherwise.
   //
   //I could try mathematical shenanigans here, but they have to be at least quadratic because I have
